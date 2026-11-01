@@ -124,3 +124,11 @@ python3 -m http.server 8080
 - 律师资料中的联系电话、邮箱来自原站公开信息；如需变更请在「站点设置」中修改后再对外发布。
 
 - 2026-11-01 新增：刘洋律师参加第六届警察刑事执法论坛（2022-11，照片存于 assets/img/police-forum-*.jpeg，standalone.html 已内嵌 base64）。
+
+## 部署（GitHub Pages）
+
+- 仓库：https://github.com/liuyanglawyer/liuyanglawyer.github.io （main 分支，根目录）
+- 线上地址：https://liuyanglawyer.github.io/
+- 自定义域名：liuyanglawyer.cn（域名实名/购买走腾讯云，DNS CNAME→liuyanglawyer.github.io，@ A→185.199.108-111.153）
+- 站点为扁平结构：全部 css/js/vendor/图片在根目录（2026-11-01 从 assets/ 目录扁平化，standalone.html 已同步重新生成）
+- 更新流程：改文件 → git add/commit → git push → 约 1 分钟内 Pages 自动重建
