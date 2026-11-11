@@ -117,8 +117,10 @@
   }
   .fab:active{transform:scale(.97);}
   .overlay{
-    position:fixed; inset:0; background:rgba(20,20,25,.5); z-index:100;
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(20,20,25,.5); z-index:100;
     display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:24px 12px;
+    -webkit-overflow-scrolling:touch;
   }
   .overlay.show{display:flex;}
   .form-panel{
@@ -442,25 +444,37 @@
     state.q = this.value; render();
   });
   document.getElementById('chips').addEventListener('click', function(ev){
-    var c = ev.target.closest('.chip'); if(!c) return;
-    document.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
+    var c = ev.target.closest ? ev.target.closest('.chip') : null;
+    if(!c){
+      var t = ev.target; while(t && t !== this){ if((t.className||'').indexOf('chip') > -1){ c = t; break; } t = t.parentNode; }
+    }
+    if(!c) return;
+    var chips = document.querySelectorAll('.chip');
+    for(var k=0;k<chips.length;k++){ chips[k].classList.remove('on'); }
     c.classList.add('on');
     state.type = c.getAttribute('data-t');
     render();
   });
 
   // ===== 新增表单 =====
+  // 兼容性说明：不依赖 inset/纯 class 切换，直接内联 display 双保险，
+  // 并同时用 addEventListener 绑定按钮，保证旧 WebView 也能弹出。
   window.openForm = function(){
-    document.getElementById('overlay').classList.add('show');
+    var ov = document.getElementById('overlay');
+    if(ov.classList) ov.classList.add('show');
+    ov.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   };
   window.closeForm = function(){
-    document.getElementById('overlay').classList.remove('show');
+    var ov = document.getElementById('overlay');
+    if(ov.classList) ov.classList.remove('show');
+    ov.style.display = 'none';
     document.body.style.overflow = '';
   };
   document.getElementById('overlay').addEventListener('click', function(ev){
     if(ev.target===this) closeForm();
   });
+  document.getElementById('fab').addEventListener('click', function(){ openForm(); });
 
   window.submitEntry = function(){
     var title = document.getElementById('f-title').value.trim();
