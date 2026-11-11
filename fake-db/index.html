@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>法律行业虚假案例、虚假文件、虚假文献数据库</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --card:#ffffff; --ink:#22252a; --sub:#6b7076; --line:#e6e3dd;
+    --accent:#9e2b25; --accent-soft:#f7e9e7; --ok:#2b6e4f; --ok-soft:#e8f2ec;
+    --warn:#b26a00; --warn-soft:#fbf1df; --link:#1a5c9e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:16px; line-height:1.75;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:0 16px 64px;}
+
+  /* ===== header ===== */
+  header{
+    background:linear-gradient(160deg,#8f221c,#b23a2e 60%,#c2543f);
+    color:#fff; padding:28px 16px 22px;
+  }
+  header .inner{max-width:760px; margin:0 auto;}
+  header h1{margin:0 0 6px; font-size:22px; line-height:1.4; font-weight:700; letter-spacing:.5px;}
+  header p{margin:0; font-size:13.5px; opacity:.92; line-height:1.6;}
+  .searchbar{
+    max-width:760px; margin:-18px auto 0; padding:0 16px; position:relative; z-index:5;
+  }
+  .searchbar input{
+    width:100%; padding:13px 16px; font-size:16px; border:1px solid var(--line);
+    border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.08); background:var(--card);
+    outline:none; color:var(--ink);
+  }
+  .searchbar input:focus{border-color:#c2543f;}
+
+  /* ===== filter chips ===== */
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 4px;}
+  .chip{
+    padding:6px 14px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); font-size:13.5px; color:var(--sub); cursor:pointer; user-select:none;
+  }
+  .chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
+  .count{font-size:13px; color:var(--sub); margin:8px 0 0;}
+
+  /* ===== entry card ===== */
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    margin-top:16px; overflow:hidden;
+  }
+  .card-head{padding:16px 18px 0;}
+  .badges{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; align-items:center;}
+  .badge{font-size:12px; padding:3px 10px; border-radius:6px; font-weight:600; white-space:nowrap;}
+  .b-type{background:#ece9f5; color:#4a3d8f;}
+  .b-fake{background:var(--accent-soft); color:var(--accent);}
+  .b-warn{background:var(--warn-soft); color:var(--warn);}
+  .b-ok{background:var(--ok-soft); color:var(--ok);}
+  .b-date{background:#f0efec; color:var(--sub); font-weight:400;}
+  .card h2{
+    margin:0 0 8px; font-size:18px; line-height:1.5; cursor:pointer;
+  }
+  .summary{color:var(--sub); font-size:14.5px; margin:0 0 14px; padding-bottom:14px; border-bottom:1px dashed var(--line);}
+  .detail{display:none; padding:4px 18px 18px; border-top:1px solid var(--line);}
+  .detail.open{display:block;}
+  .card-foot{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    padding:10px 18px 14px; border-top:1px solid var(--line); background:#fafaf8;
+  }
+  .mini-btn{
+    font-size:12.5px; padding:5px 12px; border-radius:8px; border:1px solid var(--line);
+    background:#fff; color:var(--sub); cursor:pointer;
+  }
+  .mini-btn.danger{color:var(--accent); border-color:#e7c8c5;}
+  .contrib{font-size:12.5px; color:var(--sub); margin-left:auto;}
+  .toggle{font-size:14px; color:var(--link); cursor:pointer; font-weight:600;}
+
+  /* ===== article typography ===== */
+  .article{font-size:15.5px;}
+  .article h3{font-size:17px; margin:26px 0 10px; padding-left:10px; border-left:4px solid var(--accent); line-height:1.4;}
+  .article h3:first-child{margin-top:8px;}
+  .article p{margin:10px 0;}
+  .article blockquote{
+    margin:14px 0; padding:12px 16px; background:#faf7f4; border-left:4px solid #d9b8b3;
+    border-radius:0 8px 8px 0; color:#5a4a48; font-size:14.5px;
+  }
+  .article .quote-src{font-size:13px; color:var(--sub); margin-top:6px;}
+  .article strong{color:#111;}
+  .article .hl{background:#fdf3d8; padding:0 4px; border-radius:3px; font-weight:600;}
+  .article .conclusion{
+    background:var(--accent-soft); border:1px solid #eccfcb; border-radius:10px;
+    padding:14px 16px; margin:14px 0; font-size:15px;
+  }
+  .article .author-note{
+    background:#f2f6fb; border:1px solid #d5e2f0; border-radius:10px;
+    padding:14px 16px; margin:12px 0 18px; font-size:14.5px;
+  }
+  .article .author-note .t{font-weight:700; color:#1a5c9e; margin-bottom:6px;}
+  .article table{width:100%; border-collapse:collapse; margin:14px 0; font-size:14px;}
+  .article th,.article td{border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top;}
+  .article th{background:#f4f2ee; font-weight:600;}
+  .article ol,.article ul{padding-left:22px; margin:10px 0;}
+  .article li{margin:8px 0;}
+  .article a{color:var(--link); word-break:break-all;}
+  .article .meta{font-size:13px; color:var(--sub); border-top:1px dashed var(--line); margin-top:22px; padding-top:12px;}
+  .article .point{margin:12px 0;}
+  .article .point .pt{font-weight:700;}
+
+  /* ===== add form ===== */
+  .fab{
+    position:fixed; right:18px; bottom:22px; z-index:50;
+    background:var(--accent); color:#fff; border:none; border-radius:999px;
+    padding:13px 22px; font-size:15px; font-weight:700; cursor:pointer;
+    box-shadow:0 6px 18px rgba(158,43,37,.4);
+  }
+  .fab:active{transform:scale(.97);}
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,20,25,.5); z-index:100;
+    display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:24px 12px;
+  }
+  .overlay.show{display:flex;}
+  .form-panel{
+    background:var(--card); border-radius:16px; width:100%; max-width:560px;
+    padding:20px 20px 24px; margin:auto 0;
+  }
+  .form-panel h2{margin:0 0 4px; font-size:18px;}
+  .form-panel .tip{font-size:13px; color:var(--sub); margin-bottom:14px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:13.5px; font-weight:600; margin-bottom:5px;}
+  .field label .req{color:var(--accent);}
+  .field input,.field select,.field textarea{
+    width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--line);
+    border-radius:9px; background:#fbfaf8; color:var(--ink); font-family:inherit; outline:none;
+  }
+  .field textarea{min-height:88px; resize:vertical; line-height:1.6;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:#c2543f; background:#fff;}
+  .form-actions{display:flex; gap:10px; margin-top:16px;}
+  .btn{
+    flex:1; padding:12px; border-radius:10px; border:none; font-size:15px; font-weight:700; cursor:pointer;
+  }
+  .btn.primary{background:var(--accent); color:#fff;}
+  .btn.ghost{background:#f0efec; color:var(--sub); font-weight:500;}
+
+  /* ===== howto ===== */
+  .howto{
+    background:#f2f6fb; border:1px solid #d5e2f0; border-radius:14px;
+    padding:16px 18px; margin-top:18px; font-size:14px; color:#31465e;
+  }
+  .howto .t{font-weight:700; font-size:15px; margin-bottom:6px;}
+  .howto ol{margin:6px 0 0; padding-left:20px;}
+  .howto li{margin:4px 0;}
+
+  footer{max-width:760px; margin:32px auto 0; padding:0 16px; font-size:13px; color:var(--sub);}
+  footer .admin{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .empty{ text-align:center; color:var(--sub); padding:48px 0; font-size:14.5px;}
+  .toast{
+    position:fixed; left:50%; bottom:90px; transform:translateX(-50%);
+    background:#2c2f35; color:#fff; padding:10px 18px; border-radius:10px; font-size:14px;
+    z-index:200; display:none; max-width:86vw; text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <h1>法律行业虚假案例、虚假文件、虚假文献数据库</h1>
+    <p>收录经查证无出处、内容不实或真实性无法核实的「法律依据」，供律师同行查询引用前核验 · 共创共建</p>
+  </div>
+</header>
+
+<div class="searchbar">
+  <input id="q" type="search" placeholder="搜索标题、关键词，如：复函 / 外汇 / 虚假" autocomplete="off">
+</div>
+
+<div class="wrap">
+  <div class="chips" id="chips">
+    <div class="chip on" data-t="全部">全部</div>
+    <div class="chip" data-t="虚假文件">虚假文件</div>
+    <div class="chip" data-t="虚假案例">虚假案例</div>
+    <div class="chip" data-t="虚假文献">虚假文献</div>
+    <div class="chip" data-t="存疑待核">存疑待核</div>
+  </div>
+  <div class="count" id="count"></div>
+
+  <div id="list"></div>
+
+  <div class="howto" id="howto">
+    <div class="t">📌 如何共创（欢迎律师同行投稿）</div>
+    <ol>
+      <li>点击右下角 <strong>「＋ 新增条目」</strong>，填写你查证过的虚假/存疑文件、案例或文献；</li>
+      <li>点提交——投稿内容会<strong>自动复制</strong>，直接打开微信<strong>粘贴发送</strong>给刘洋律师即可（公众号「网络犯罪法律实务圈」后台亦可）。</li>
+    </ol>
+    <p style="margin:8px 0 0;">维护者核验后更新主库，全网同行即可查到。您的署名将随条目一起展示。</p>
+  </div>
+</div>
+
+<button class="fab" id="fab" onclick="openForm()">＋ 新增条目</button>
+
+<!-- ===== 新增表单 ===== -->
+<div class="overlay" id="overlay">
+  <div class="form-panel">
+    <h2>新增条目</h2>
+    <div class="tip">只收录经过查证的条目，请注明查证渠道，避免以讹传讹。</div>
+    <div class="field"><label>标题 <span class="req">*</span></label><input id="f-title" placeholder="如：XX高院《关于……的复函》"></div>
+    <div style="display:flex; gap:10px;">
+      <div class="field" style="flex:1;"><label>类型 <span class="req">*</span></label>
+        <select id="f-type">
+          <option>虚假文件</option><option>虚假案例</option><option>虚假文献</option><option>存疑待核</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1;"><label>查证结论 <span class="req">*</span></label>
+        <select id="f-con">
+          <option>查无实据</option><option>内容不实</option><option>已证伪</option><option>存疑待核</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>涉及领域/罪名</label><input id="f-field" placeholder="如：非法经营罪 / 变相买卖外汇"></div>
+    <div class="field"><label>一句话摘要 <span class="req">*</span></label><input id="f-sum" placeholder="一句话说清它是什么、为什么不能引用"></div>
+    <div class="field"><label>查证过程（渠道、方法、结果）</label><textarea id="f-verify" placeholder="1. 官网检索：无；&#10;2. 法规库检索：0 命中；&#10;3. 裁判文书检索：无引用……"></textarea></div>
+    <div class="field"><label>给同行的建议</label><textarea id="f-advice" placeholder="如何识别、如何应对、替代依据是什么……"></textarea></div>
+    <div class="field"><label>相关链接（每行一个）</label><textarea id="f-links" placeholder="https://..."></textarea></div>
+    <div class="field"><label>贡献者署名（可匿名）</label><input id="f-by" placeholder="如：北京·刘律师"></div>
+    <div class="form-actions">
+      <button class="btn ghost" onclick="closeForm()">取消</button>
+      <button class="btn primary" onclick="submitEntry()">提交</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <div>维护者：刘洋律师（网络犯罪辩护 · 公众号「网络犯罪法律实务圈」）｜本页为单文件离线页，可转发存档</div>
+  <div style="margin-top:4px;">免责声明：条目内容系贡献者查证意见，供引用前核验参考，不构成法律意见；如条目有误欢迎提供原件或出处，核验后修正或删除。</div>
+  <details style="margin-top:10px;">
+    <summary style="cursor:pointer; font-size:12.5px;">维护者工具（备份 / 合并投稿）</summary>
+    <div class="admin" style="margin-top:8px;">
+      <button class="mini-btn" onclick="exportJSON()">导出本机新增条目（JSON）</button>
+      <button class="mini-btn" onclick="importJSON()">合并投稿（粘贴 JSON）</button>
+      <button class="mini-btn danger" onclick="clearLocal()">清空本机新增条目</button>
+    </div>
+  </details>
+</footer>
+
+<!-- ===== 首条条目正文模板（福建高院复函） ===== -->
+<script type="text/template" id="tpl-entry1">
+<div class="article">
+  <div class="author-note">
+    <div class="t">刘洋律师按</div>
+    今天在检索材料时，AI帮我找到了这个"文件"。因为文件本身的疑问，又找AI核实了一下"文件"的出处。以下是AI帮我核实的文档，基本可以直接发布，我适当删减、增加了内容和图片。
+  </div>
+
+  <div class="conclusion">
+    这份名为《福建省高级人民法院关于非法买卖外汇行为刑事追诉范围的复函》（署期 2019 年 5 月 21 日，致国家外汇管理局福建省分局）的文件，在网络流传已数年，但截至本文写作之日（2026 年 11 月），<strong>没有任何公开渠道能够证实其真实存在</strong>。其原文从未公开，无文号、无印章版本照片、无裁判文书引用、无官方数据库收录。请注意，<span class="hl">在任何文章、辩护意见、讲课材料中，均不应将其作为规范依据引用</span>；如办案机关以其观点作为追诉依据，应直接要求出示文件原件并质证其真实性。
+  </div>
+
+  <h3>一、这份「复函」长什么样</h3>
+  <p>流传版本的「主要内容」为（引自黄应生 2024 年文章的转述）：</p>
+  <blockquote>
+    最高人民法院、最高人民检察院 2019 年 1 月 31 日发布《办理非法从事资金支付结算业务、非法买卖外汇刑事案件适用法律若干问题的解释》第一条的规制对象是境内直接交易的倒买倒卖外汇和境内外对敲方式进行资金跨国境的兑付变相买卖外汇行为……外汇属于国家控制特殊商品，无论是地下钱庄、经营者还是客户，大量购买、兑换、出售的行为均属于扰乱金融市场秩序，具有现实的危害性，当数额达到解释第三条规定的标准，即应追究刑事责任。
+    <div class="quote-src">黄应生文章链接：<a href="https://www.163.com/dy/article/J1FH3KJI055674EL.html" target="_blank" rel="noopener">https://www.163.com/dy/article/J1FH3KJI055674EL.html</a></div>
+  </blockquote>
+  <p>黄应生的文章一开始也表明了自己的态度，交代了"文件"来源：</p>
+  <blockquote>
+    我一直以为，公司或者个人通过地下钱庄换汇自用的行为虽违反了国家规定，但不符合非法经营罪的构成要件，不宜认定为非法经营罪。但近年来，这个问题似乎越来越模糊了，甚至争议越来越大。尤其是福建不少人认为，不管是否有营利目的，也不管是否有倒买倒卖行为，公司、个人只要有购买、兑换或者出售外汇的行为，达到规定数额就可以认定为非法经营罪。后来有人给我一份福建省高级人民法院于2019年 5 月 21 日致国家外汇管理局福建省分局《关于非法买卖外汇行为刑事追诉范围的复函》。该复函主要内容为：……
+  </blockquote>
+  <p class="point">该"文件"的错误之处在于：<span class="hl">不管是钱庄、经营者还是单纯换汇客户，数额达标一律追刑</span>。这个立场如果成立，意味着「以自用为目的换汇」的客户也构成非法经营罪——这与主流裁判观点（营利目的＋经营性双要件）严重冲突。正因如此，这份「复函」在辩护圈被反复提及：有人拿它警告福建地区执业风险，也有人拿它反证「地方扩张立场」的存在。</p>
+
+  <h3>二、查证渠道</h3>
+  <p>针对该复函的真实性，本轮共核查以下渠道（均为否定结果）：</p>
+  <table>
+    <tr><th style="width:58%">查证渠道</th><th>结果</th></tr>
+    <tr><td>福建省高级人民法院官网（fjcourt.gov.cn）「司法文件」栏目</td><td>无此文件</td></tr>
+    <tr><td>国家外汇管理局福建省分局官网（safe.gov.cn/fujian）</td><td>无此文件——<strong>收文方自己也没公开过</strong></td></tr>
+    <tr><td>北大法宝地方法规库（按发布机关、按标题全文词两轮检索）</td><td>0 命中</td></tr>
+    <tr><td>威科先行法规库</td><td>0 命中</td></tr>
+    <tr><td>以复函精确标题《关于非法买卖外汇行为刑事追诉范围的复函》全网检索</td><td>所有命中页面均为两高 2019 年解释本身，无任何页面载有该复函原文</td></tr>
+    <tr><td>裁判文书、不起诉决定书</td><td>未检索到任何一份文书引用该复函</td></tr>
+    <tr><td>期刊、官方法律适用类出版物</td><td>未见引用</td></tr>
+  </table>
+  <p>这份地方法院复函在六七年内在全网竟找不到一份原文、一张影印件、一份引用它的判决书。</p>
+
+  <h3>三、传播链</h3>
+  <p>目前可查的全部公开转述，只追溯到两个节点，且<strong>没有任何一个声称见过原件</strong>：</p>
+  <p class="point"><span class="pt">节点 1：黄应生（原最高人民法院法官，公众号「法治应生」）2024 年 5 月文章</span><br>
+  《单纯购买或者出售外汇的非法行为不宜认定为非法经营罪》（网易转载：<a href="https://www.163.com/dy/article/J1FH3KJI055674EL.html" target="_blank" rel="noopener">https://www.163.com/dy/article/J1FH3KJI055674EL.html</a>）</p>
+  <p>黄应生的原话值得全文引用：</p>
+  <blockquote>
+    「后来<strong>有人给我一份</strong>……复函。该复函主要内容为：【……】（<strong>朋友转发给我的，不是红头文件，也无盖章，不知是否属实</strong>）……总觉得复函内容应该不太属实或者不够全面，但<strong>经多方核实，仍未确认真伪</strong>。兹事体大，遂就此问题展开讨论。」
+  </blockquote>
+  <p>最早发布该图片的黄应生是把这份文件作为「需要被讨论、证伪的传闻」来写的，而不是作为依据来引用的。</p>
+  <p class="point"><span class="pt">节点 2：泽大所黄剑律师《非法买卖外汇刑事案件辩护要点》</span><br>
+  （微信公众号，据第七届厚启商事犯罪论坛发言整理）</p>
+  <p>黄剑的措辞是「<strong>网络流传</strong>的《福建省高院关于非法买卖外汇行为刑事追诉范围的复函》[2019 年 5 月 21 日]即认为……」，并且明确将其定性为「部分地区公检法至今依旧持有的<strong>错误观点</strong>」的例证。原文链接：<a href="http://mp.weixin.qq.com/s?__biz=MzAwNDEzNTcwNw==&mid=2651090756&idx=2&sn=bbb87e14e20628b07d9521c6494e12db&chksm=813b3e04da4732a0249b6ed923c8d6b4a2297de377d19b88d7f28908a3bbc9fc6f9d1f5ed651#rd" target="_blank" rel="noopener">泽大原创丨黄剑：非法买卖外汇刑事案件辩护要点</a></p>
+  <p class="point"><span class="hl">注意两个版本的转述措辞不一致</span>：黄应生版作「当数额达到解释第三条规定的标准」，黄剑版作「只要数额达到立案标准」。同一份文件出现两个互不相同的「原文」，是典型的口头传闻层层转述特征——每一层转述者都在按自己的记忆和立场重新组织「引文」。</p>
+
+  <h3>四、内容本身经不起推敲</h3>
+  <p>即便抛开形式真实性，流传版本的内容也与上位规范直接冲突：</p>
+  <ol>
+    <li><strong>与两高解释的明文不符。</strong>2019 年《解释》明文规制的是「倒买倒卖外汇或者变相买卖外汇」行为；两高部门负责人答记者问明确解释重点打击「换汇黄牛」和「对敲型」地下钱庄。将「单纯购买、出售外汇的客户」一体入罪，缺乏解释文本依据。</li>
+    <li><strong>与主流裁判立场相悖。</strong>刑事审判参考第 1158 号刘汉案（湖北高院二审改判：不具有营利目的不构成非法经营罪）、广东高院 2016 年地下钱庄类案件调研报告、大量不起诉案例（如温检公诉部刑不诉〔2019〕1、2 号）均持「营利目的＋经营性」双要件。</li>
+    <li><strong>与最新权威案例相反。</strong>林某业非法经营案（人民法院案例库入库案例）的要旨明确否定了对单纯换汇客户的扩张追诉。</li>
+    <li><strong>一个省高院以「复函」对外确定刑事追诉范围</strong>，在司法文件体系中也不合常理：此类涉及刑事追诉边界的口径，若真实存在，通常会以会议纪要、答复内部掌握，且应有规范文号——流传版本恰恰没有任何文号。</li>
+  </ol>
+
+  <h3>五、给同行的三条操作建议</h3>
+  <ol>
+    <li><strong>不要引用。</strong>写文章、做培训、写辩护意见时，不要写「福建省高级人民法院 2019 年复函认为客户亦应追责」。该文件真实性无法核实，引用它等于把自己的论证建立在一个可能不存在的文件上，反而给对方留下攻击点。</li>
+    <li><strong>如办案机关以其观点施压</strong>，正确的做法不是去讨论「复函怎么说」，而是要求对方出示文件原件并说明其效力层级——省高院复函既非司法解释、亦非规范性文件，即便真实存在也不能作为裁判依据；然后直接回到两高解释第 2 条、答记者问口径和入库案例正面论证。</li>
+    <li><strong>如你在福建地区办理此类案件</strong>，风险的正确表述方式是「福建部分地区实务中曾有将单纯换汇客户纳入追诉的扩张做法」，这是可以从个案辩护经验层面主张的；但不要落到一份查无实据的文件上。</li>
+  </ol>
+
+  <h3>六、诚实声明</h3>
+  <p>需要说明查证的边界：该复函属法院致外管分局的内部往来文书，理论上可能存在但从未公开。因此严谨的结论不是「百分之百系伪造」，而是：</p>
+  <div class="conclusion">
+    该文件无任何公开出处、无文号、无原件影印、无文书引用，其唯一传播源头自称未能核实真伪，且各转述版本措辞互不一致——<strong>依法律写作和执业引用的基本标准，应视为「真实性无法核实的传闻」，不得引用</strong>。
+  </div>
+  <p>如您持有该复函的红头原件或影印件，欢迎提供，我们将立即修正本文结论。</p>
+
+  <div class="meta">核查时间：2026 年 11 月 11 日。核查渠道：福建高院官网、国家外汇管理局福建省分局官网、北大法宝、威科先行、全网精确标题检索、裁判文书检索。主要转述来源：法治应生（黄应生）2024-05-06 文章、泽大所黄剑《非法买卖外汇刑事案件辩护要点》。</div>
+</div>
+</script>
+
+<script>
+(function(){
+  var LS_KEY = 'fakelegaldb_entries_v1';
+
+  // 种子条目（随页面发布，维护者手动更新）
+  var seed = [{
+    id: 'seed-1',
+    title: '警示 | 一份「查无实据」的福建高院复函——请勿引用《关于非法买卖外汇行为刑事追诉范围的复函》',
+    type: '虚假文件',
+    con: '查无实据',
+    field: '非法经营罪 / 变相买卖外汇',
+    date: '2026-11-11',
+    by: '刘洋律师',
+    summary: '署期 2019-05-21 的福建高院致外汇局福建省分局复函，全网查无原文、无文号、无影印件、无裁判文书引用，传播源头自称未能核实真伪——不得作为规范依据引用。',
+    tplId: 'tpl-entry1',
+    open: false
+  }];
+
+  function loadLocal(){
+    try{ return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }catch(e){ return []; }
+  }
+  function saveLocal(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+
+  var state = { q:'', type:'全部', entries: seed.concat(loadLocal()) };
+
+  function badgeCls(con){
+    if(con==='查无实据'||con==='内容不实'||con==='已证伪') return 'b-fake';
+    if(con==='存疑待核') return 'b-warn';
+    return 'b-ok';
+  }
+  function esc(s){
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function linkify(s){
+    return esc(s).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
+  }
+
+  function render(){
+    var list = document.getElementById('list');
+    var q = state.q.trim().toLowerCase();
+    var shown = state.entries.filter(function(e){
+      if(state.type!=='全部' && e.type!==state.type) return false;
+      if(!q) return true;
+      var hay = (e.title+' '+(e.summary||'')+' '+(e.field||'')+' '+(e.by||'')).toLowerCase();
+      return hay.indexOf(q)>-1;
+    });
+    document.getElementById('count').textContent = '数据库共 '+state.entries.length+' 条，当前显示 '+shown.length+' 条';
+    if(!shown.length){
+      list.innerHTML = '<div class="empty">没有匹配的条目。换个关键词，或点击右下角「＋ 新增条目」投稿。</div>';
+      return;
+    }
+    var html = '';
+    shown.forEach(function(e, i){
+      var idx = state.entries.indexOf(e);
+      html += '<div class="card" data-i="'+idx+'">'
+        + '<div class="card-head">'
+        + '<div class="badges">'
+        + '<span class="badge b-type">'+esc(e.type)+'</span>'
+        + '<span class="badge '+badgeCls(e.con)+'">'+esc(e.con)+'</span>'
+        + (e.field?'<span class="badge b-date">'+esc(e.field)+'</span>':'')
+        + '<span class="badge b-date">'+esc(e.date||'')+'</span>'
+        + '</div>'
+        + '<h2 onclick="toggleDetail('+idx+')">'+esc(e.title)+'</h2>'
+        + '<p class="summary">'+esc(e.summary||'')+'</p>'
+        + '</div>'
+        + '<div class="detail'+(e.open?' open':'')+'" id="d'+idx+'">'
+        + (e.tplId
+            ? document.getElementById(e.tplId).innerHTML
+            : renderUserBody(e))
+        + '</div>'
+        + '<div class="card-foot">'
+        + '<span class="toggle" onclick="toggleDetail('+idx+')">'+(e.open?'收起 ▲':'展开全文 ▼')+'</span>'
+        + (e.local ? '<button class="mini-btn" onclick="copyEntryText('+idx+')">复制投稿内容</button>'
+                   + '<button class="mini-btn danger" onclick="delEntry('+idx+')">删除</button>' : '')
+        + '<span class="contrib">'+esc(e.by?'贡献者：'+e.by:'')+'</span>'
+        + '</div>'
+        + '</div>';
+    });
+    list.innerHTML = html;
+  }
+
+  function renderUserBody(e){
+    var h = '';
+    h += '<div class="article">';
+    h += '<div class="conclusion"><strong>查证结论：'+esc(e.con)+'</strong>｜类型：'+esc(e.type)+(e.field?'｜领域：'+esc(e.field):'')+'</div>';
+    if(e.verify){
+      h += '<h3>查证过程</h3><p style="white-space:pre-wrap;">'+linkify(e.verify)+'</p>';
+    }
+    if(e.advice){
+      h += '<h3>给同行的建议</h3><p style="white-space:pre-wrap;">'+linkify(e.advice)+'</p>';
+    }
+    if(e.links && e.links.length){
+      h += '<h3>相关链接</h3><ul>';
+      e.links.forEach(function(l){ h += '<li><a href="'+esc(l)+'" target="_blank" rel="noopener">'+esc(l)+'</a></li>'; });
+      h += '</ul>';
+    }
+    h += '<div class="meta">提交时间：'+esc(e.date||'')+'｜贡献者：'+esc(e.by||'匿名')+'。本条目为同行投稿，引用前请自行复核。</div>';
+    h += '</div>';
+    return h;
+  }
+
+  window.toggleDetail = function(i){
+    state.entries[i].open = !state.entries[i].open;
+    var d = document.getElementById('d'+i);
+    if(d) d.classList.toggle('open', state.entries[i].open);
+    // 更新按钮文案
+    var card = d ? d.closest('.card') : null;
+    if(card){
+      var t = card.querySelector('.toggle');
+      if(t) t.textContent = state.entries[i].open ? '收起 ▲' : '展开全文 ▼';
+    }
+  };
+
+  // ===== 搜索与筛选 =====
+  document.getElementById('q').addEventListener('input', function(){
+    state.q = this.value; render();
+  });
+  document.getElementById('chips').addEventListener('click', function(ev){
+    var c = ev.target.closest('.chip'); if(!c) return;
+    document.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
+    c.classList.add('on');
+    state.type = c.getAttribute('data-t');
+    render();
+  });
+
+  // ===== 新增表单 =====
+  window.openForm = function(){
+    document.getElementById('overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeForm = function(){
+    document.getElementById('overlay').classList.remove('show');
+    document.body.style.overflow = '';
+  };
+  document.getElementById('overlay').addEventListener('click', function(ev){
+    if(ev.target===this) closeForm();
+  });
+
+  window.submitEntry = function(){
+    var title = document.getElementById('f-title').value.trim();
+    var sum = document.getElementById('f-sum').value.trim();
+    if(!title || !sum){ toast('标题和一句话摘要为必填项'); return; }
+    var links = document.getElementById('f-links').value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+    var e = {
+      id: 'local-' + Date.now(),
+      local: true,
+      title: title,
+      type: document.getElementById('f-type').value,
+      con: document.getElementById('f-con').value,
+      field: document.getElementById('f-field').value.trim(),
+      summary: sum,
+      verify: document.getElementById('f-verify').value.trim(),
+      advice: document.getElementById('f-advice').value.trim(),
+      links: links,
+      by: document.getElementById('f-by').value.trim() || '匿名',
+      date: new Date().toISOString().slice(0,10),
+      open: false
+    };
+    var arr = loadLocal(); arr.unshift(e); saveLocal(arr);
+    state.entries = seed.concat(arr);
+    closeForm();
+    ['f-title','f-field','f-sum','f-verify','f-advice','f-links','f-by'].forEach(function(id){
+      document.getElementById(id).value='';
+    });
+    render();
+    copyText(entryText(e), '投稿内容已复制，请打开微信直接粘贴发给刘洋律师');
+  };
+
+  window.delEntry = function(i){
+    var e = state.entries[i];
+    if(!e.local || !confirm('确定删除本机保存的「'+e.title.slice(0,30)+'…」？')) return;
+    var arr = loadLocal().filter(function(x){ return x.id!==e.id; });
+    saveLocal(arr);
+    state.entries = seed.concat(arr);
+    render();
+  };
+
+  // ===== 投稿内容（人话版，微信直接粘贴） =====
+  function entryText(e){
+    var L = [];
+    L.push('【虚假条目投稿】');
+    L.push('标题：' + e.title);
+    L.push('类型：' + e.type + '｜查证结论：' + e.con);
+    if(e.field) L.push('领域：' + e.field);
+    L.push('摘要：' + (e.summary||''));
+    if(e.verify) L.push('查证过程：' + e.verify);
+    if(e.advice) L.push('给同行的建议：' + e.advice);
+    if(e.links && e.links.length) L.push('链接：' + e.links.join('；'));
+    L.push('贡献者：' + (e.by||'匿名') + '｜日期：' + (e.date||''));
+    return L.join('\n');
+  }
+  window.copyEntryText = function(i){
+    copyText(entryText(state.entries[i]), '投稿内容已复制，直接粘贴到微信发给刘洋律师即可');
+  };
+
+  // ===== 导入导出（维护者工具） =====
+  window.exportJSON = function(){
+    var arr = loadLocal();
+    if(!arr.length){ toast('本机暂无新增条目'); return; }
+    copyText(JSON.stringify(arr, null, 2), '已复制全部 '+arr.length+' 条新增条目（JSON），粘贴发给维护者即可');
+  };
+  window.importJSON = function(){
+    var s = prompt('粘贴贡献者发来的 JSON（单条对象或数组）：');
+    if(!s) return;
+    try{
+      var data = JSON.parse(s);
+      if(!Array.isArray(data)) data = [data];
+      var arr = loadLocal();
+      var added = 0;
+      data.forEach(function(x){
+        if(x && x.title && x.type && !arr.some(function(y){return y.id===x.id;})){
+          x.local = true; arr.unshift(x); added++;
+        }
+      });
+      saveLocal(arr);
+      state.entries = seed.concat(arr);
+      render();
+      toast('已合并 '+added+' 条（重复条目自动跳过）');
+    }catch(err){ toast('JSON 格式有误，请检查后重试'); }
+  };
+  window.clearLocal = function(){
+    if(!confirm('清空本机新增的全部条目？（页面自带条目不受影响）')) return;
+    saveLocal([]); state.entries = seed.slice(); render(); toast('已清空');
+  };
+
+  function copyText(s, msg){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(s).then(function(){ toast(msg); }, function(){ fallbackCopy(s,msg); });
+    }else{ fallbackCopy(s,msg); }
+  }
+  function fallbackCopy(s,msg){
+    var ta = document.createElement('textarea');
+    ta.value = s; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast(msg); }catch(e){ toast('复制失败，请手动复制'); }
+    document.body.removeChild(ta);
+  }
+
+  function toast(m){
+    var t = document.getElementById('toast');
+    t.textContent = m; t.style.display='block';
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.style.display='none'; }, 3200);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
