@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>论锋 · 辩论训练游戏</title>
+<style>
+:root{
+  --ink:#1f2a44;        /* 藏青 */
+  --cinnabar:#b03a2e;   /* 朱砂 */
+  --paper:#f7f4ec;      /* 宣纸 */
+  --card:#ffffff;
+  --line:#e4ddd0;
+  --gold:#a8843c;
+  --green:#2e7d5b;
+  --muted:#7a7568;
+  --shadow:0 2px 10px rgba(31,42,68,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.65;min-height:100vh;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));
+}
+header{
+  background:linear-gradient(135deg,var(--ink) 0%,#31415f 100%);
+  color:#f5efdf;padding:26px 18px 20px;text-align:center;
+  border-bottom:4px solid var(--cinnabar);
+}
+header h1{font-family:"Songti SC","STSong",serif;font-size:30px;letter-spacing:8px;font-weight:700}
+header .sub{font-size:13px;color:#c9bfa4;margin-top:6px;letter-spacing:2px}
+main{max-width:760px;margin:0 auto;padding:16px 14px}
+section{display:none;animation:fade .25s ease}
+section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2.page-title{font-family:"Songti SC","STSong",serif;font-size:22px;margin:8px 0 4px;display:flex;align-items:center;gap:8px}
+h2.page-title::before{content:"";display:inline-block;width:4px;height:20px;background:var(--cinnabar);border-radius:2px}
+.page-desc{font-size:13px;color:var(--muted);margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h3{font-size:16px;margin-bottom:8px}
+.small{font-size:13px;color:var(--muted)}
+.tag{display:inline-block;font-size:12px;padding:2px 10px;border-radius:20px;background:#eef1f7;color:var(--ink);margin:2px 4px 2px 0;border:1px solid #dfe3ee}
+.tag.red{background:#fdeeea;color:var(--cinnabar);border-color:#f3cfc8}
+.tag.gold{background:#faf3e3;color:var(--gold);border-color:#ecdfbc}
+.tag.green{background:#e8f4ee;color:var(--green);border-color:#cbe5d8}
+button{
+  font-family:inherit;font-size:15px;cursor:pointer;border:none;border-radius:10px;
+  padding:11px 18px;background:var(--ink);color:#f5efdf;transition:.15s;
+}
+button:active{transform:scale(.97)}
+button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.accent{background:var(--cinnabar)}
+button.ghost{background:transparent;color:var(--ink);border:1px dashed var(--line)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn-row button{flex:1;min-width:120px}
+/* 底部导航 */
+nav{
+  position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);
+  display:flex;max-width:760px;margin:0 auto;z-index:50;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+nav a{
+  flex:1;text-align:center;font-size:11px;color:var(--muted);text-decoration:none;
+  padding:8px 0 6px;
+}
+nav a .ic{font-size:20px;display:block}
+nav a.active{color:var(--cinnabar);font-weight:600}
+/* 选项按钮（答题） */
+.opt{
+  display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);
+  border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:14px;color:var(--ink);
+  font-family:inherit;cursor:pointer;transition:.15s;
+}
+.opt:active{transform:scale(.98)}
+.opt.correct{background:#e8f4ee;border-color:var(--green);color:var(--green);font-weight:600}
+.opt.wrong{background:#fdeeea;border-color:var(--cinnabar);color:var(--cinnabar)}
+.opt:disabled{cursor:default;opacity:.9}
+/* 表单 */
+textarea,input[type=text],select{
+  width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:10px;background:#fff;color:var(--ink);outline:none;resize:vertical;
+}
+textarea:focus,input:focus,select:focus{border-color:var(--ink)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+.field label span{color:var(--muted);font-weight:400;font-size:12px}
+/* 步骤指示 */
+.steps{display:flex;gap:4px;margin:10px 0 14px}
+.steps div{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps div.done{background:var(--cinnabar)}
+/* 对话气泡 */
+.speech{border-left:4px solid var(--cinnabar);background:#fdf9f3;padding:12px 14px;border-radius:0 10px 10px 0;margin:10px 0;font-size:14px}
+.speech.opponent{border-left-color:var(--ink)}
+.speech .who{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
+.feedback{border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14px}
+.feedback.good{background:#e8f4ee;border:1px solid #cbe5d8}
+.feedback.bad{background:#fdeeea;border:1px solid #f3cfc8}
+/* 计分 */
+.scorebar{display:flex;gap:8px;margin-bottom:14px}
+.scorebar .s{
+  flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;text-align:center;
+  padding:10px 4px;box-shadow:var(--shadow);
+}
+.scorebar .s b{display:block;font-size:20px;color:var(--cinnabar);font-family:"Songti SC",serif}
+.scorebar .s span{font-size:11px;color:var(--muted)}
+/* 计时器 */
+.timer{
+  font-family:"SF Mono",Menlo,monospace;font-size:46px;text-align:center;color:var(--ink);
+  padding:16px 0;letter-spacing:2px;
+}
+.timer.danger{color:var(--cinnabar);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.45}}
+.phase-list .phase{
+  display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);
+  border-radius:10px;margin-bottom:8px;background:#fff;
+}
+.phase-list .phase.now{border-color:var(--cinnabar);background:#fdf5f2}
+.phase-list .phase .no{
+  width:30px;height:30px;border-radius:50%;background:var(--ink);color:#f5efdf;
+  display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;
+}
+.phase-list .phase .no.now{background:var(--cinnabar)}
+.phase-list .phase .info{flex:1}
+.phase-list .phase .info b{font-size:14px;display:block}
+.phase-list .phase .info span{font-size:12px;color:var(--muted)}
+/* 学堂 */
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.toc button{font-size:12px;padding:7px 12px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:20px}
+.toc button.on{background:var(--ink);color:#f5efdf;border-color:var(--ink)}
+.lesson{display:none}
+.lesson.active{display:block}
+.lesson h3{
+  font-family:"Songti SC",serif;font-size:18px;margin:6px 0 10px;color:var(--ink);
+  padding-bottom:6px;border-bottom:2px solid var(--cinnabar);
+}
+.lesson h4{font-size:15px;margin:14px 0 6px;color:var(--cinnabar)}
+.lesson ul,.lesson ol{padding-left:22px;margin:6px 0}
+.lesson li{margin-bottom:6px;font-size:14px}
+.lesson table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+.lesson th,.lesson td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+.lesson th{background:#f2efe6;font-weight:600}
+.lesson .quote{
+  background:#f8f5ec;border-left:4px solid var(--gold);padding:10px 14px;border-radius:0 8px 8px 0;
+  font-size:13px;color:#5a5344;margin:8px 0;font-family:"Songti SC",serif;
+}
+.hl{background:linear-gradient(transparent 62%,#f3d9b4 62%);font-weight:600}
+/* 金句卡 */
+.gold-card{
+  background:linear-gradient(135deg,#2b3854,#1f2a44);color:#f0e6cf;border-radius:12px;
+  padding:16px;font-family:"Songti SC",serif;font-size:15px;line-height:1.9;margin:10px 0;
+}
+.gold-card .src{font-size:11px;color:#9aa5bf;font-family:sans-serif;margin-top:6px}
+.check{list-style:none;padding-left:0!important}
+.check li{padding-left:26px;position:relative;margin-bottom:8px;font-size:14px}
+.check li::before{
+  content:"";position:absolute;left:0;top:3px;width:16px;height:16px;border:1.5px solid var(--line);
+  border-radius:4px;background:#fff;
+}
+.check li input{position:absolute;left:0;top:4px;width:16px;height:16px;opacity:0;cursor:pointer}
+.check li.checked::before{content:"✓";background:var(--green);border-color:var(--green);color:#fff;
+  text-align:center;line-height:16px;font-size:12px}
+.divider{height:1px;background:var(--line);margin:14px 0}
+.pill-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pill-nav button{font-size:13px;padding:8px 14px;border-radius:20px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.pill-nav button.on{background:var(--cinnabar);color:#fff;border-color:var(--cinnabar)}
+.result-hero{text-align:center;padding:18px 0}
+.result-hero .big{font-size:40px}
+.result-hero h3{font-family:"Songti SC",serif;font-size:20px;margin:6px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>论 锋</h1>
+  <div class="sub">辩论 · 质证 · 反驳 —— 训练场</div>
+</header>
+
+<main>
+<!-- ================= 首页 ================= -->
+<section id="home" class="active">
+  <div class="card">
+    <h3>📜 缘起</h3>
+    <p class="small">本训练场以《辩论筑基·辩论入门标准化教程》为骨架，融合游梓翔《认识辩论》、《深度说服》（黄执中·颜如晶·胡渐彪）、《学会提问》、《简单的逻辑学》等权威书目，提炼成一套可反复操练的闯关游戏。</p>
+    <div class="divider"></div>
+    <p class="small">五重训练：<span class="hl">立论工坊</span>搭框架 → <span class="hl">质证对战</span>练盘问 → <span class="hl">反驳快攻</span>拆谬误 → <span class="hl">模拟赛场</span>走全流程 → <span class="hl">对辩 AI</span>真模型自由交锋。</p>
+  </div>
+  <div class="scorebar" id="homeScores">
+    <div class="s"><b id="hs1">0</b><span>立论完成</span></div>
+    <div class="s"><b id="hs2">0%</b><span>质询命中率</span></div>
+    <div class="s"><b id="hs3">0%</b><span>反驳正确率</span></div>
+  </div>
+  <div class="card">
+    <h3>⚔️ 选择训练</h3>
+    <div class="btn-row">
+      <button class="accent" onclick="go('forge')">🏰 立论工坊</button>
+      <button onclick="go('cross')">🎯 质证对战</button>
+      <button onclick="go('flash')">⚡ 反驳快攻</button>
+      <button onclick="go('arena')">🏟️ 模拟赛场</button>
+      <button class="secondary" onclick="go('ai')">🤖 对辩 AI</button>
+      <button class="secondary" onclick="go('school')">📖 辩论学堂</button>
+    </div>
+  </div>
+  <div class="gold-card" id="dailyGolden">
+    <div class="src">今日金句</div>
+    <div id="goldenText" style="margin-top:6px"></div>
+  </div>
+  <div class="card">
+    <h3>🧭 新手三分钟入门</h3>
+    <ol class="small" style="padding-left:20px">
+      <li>辩论赢的不是嗓门，是<b>框架与反应</b>。</li>
+      <li>口诀：<b>立论要稳、质询要狠、自由辩要快、结辩要深</b>。</li>
+      <li>定义权就是战场选择权——先定义，再讨论。</li>
+      <li>反驳先拆逻辑，再谈情绪；做批判者，不做杠精。</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= 立论工坊 ================= -->
+<section id="forge">
+  <h2 class="page-title">🏰 立论工坊</h2>
+  <p class="page-desc">立论四件套：<b>定义 → 判准 → 论点 → 升华</b>。选一道辩题、一个持方，按提示逐格填写，完成后对照参考立论自评。</p>
+  <div id="forgeSelect">
+    <div class="card">
+      <h3>① 选择辩题</h3>
+      <select id="forgeTopic"></select>
+    </div>
+    <div class="card">
+      <h3>② 选择持方</h3>
+      <div class="pill-nav" id="forgeSide">
+        <button data-s="pro" class="on">正方</button>
+        <button data-s="con">反方</button>
+      </div>
+      <div id="forgeSidePreview" class="small" style="margin-top:8px"></div>
+    </div>
+    <div class="btn-row"><button class="accent" onclick="forgeStart()">开始搭建立论</button></div>
+  </div>
+  <div id="forgeWork" style="display:none">
+    <div class="steps"><div id="fs1"></div><div id="fs2"></div><div id="fs3"></div><div id="fs4"></div></div>
+    <div class="card" id="forgeCard">
+      <h3 id="forgeStepTitle"></h3>
+      <p class="small" id="forgeStepHint" style="margin-bottom:10px"></p>
+      <textarea id="forgeInput" rows="4" placeholder="在此写下你的内容…"></textarea>
+      <div class="btn-row">
+        <button class="secondary" id="forgePrev" onclick="forgeNav(-1)">上一步</button>
+        <button class="accent" id="forgeNext" onclick="forgeNav(1)">下一步</button>
+      </div>
+    </div>
+    <div id="forgeDone" style="display:none">
+      <div class="card">
+        <h3>✅ 你的完整立论</h3>
+        <div id="forgeSummary" style="font-size:14px"></div>
+      </div>
+      <div class="card">
+        <h3>📋 自评清单（勾选即得分）</h3>
+        <ul class="check" id="forgeChecklist"></ul>
+        <div class="divider"></div>
+        <div class="small" id="forgeSelfScore"></div>
+      </div>
+      <div class="card">
+        <h3>📜 参考立论（仅供对照）</h3>
+        <div id="forgeRef" style="font-size:14px"></div>
+      </div>
+      <div class="btn-row">
+        <button class="accent" onclick="forgeFinish()">保存成绩</button>
+        <button class="secondary" onclick="forgeReset()">再练一道</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 质证对战 ================= -->
+<section id="cross">
+  <h2 class="page-title">🎯 质证对战</h2>
+  <p class="page-desc">对方辩手将抛出立论点，<b>每个论点都藏有一个真实弱点</b>。你只有选中正确的攻击维度、并写下质询问题，才能逼对方让步。质询五步：设陷阱 → 逼表态 → 抓矛盾 → 缩小包围 → 确认战果。</p>
+  <div id="crossSelect">
+    <div class="card">
+      <h3>① 选择辩题</h3>
+      <select id="crossTopic"></select>
+    </div>
+    <div class="card">
+      <h3>② 选择你的持方（对方持相反立场）</h3>
+      <div class="pill-nav" id="crossSide">
+        <button data-s="pro" class="on">我打正方</button>
+        <button data-s="con">我打反方</button>
+      </div>
+    </div>
+    <div class="btn-row"><button class="accent" onclick="crossStart()">开庭质证</button></div>
+  </div>
+  <div id="crossPlay" style="display:none">
+    <div class="scorebar">
+      <div class="s"><b id="crossRound">1/2</b><span>回合</span></div>
+      <div class="s"><b id="crossHit">0</b><span>命中</span></div>
+    </div>
+    <div class="card">
+      <div class="speech opponent" id="crossOppSpeech"></div>
+    </div>
+    <div class="card" id="crossAttackCard">
+      <h3>你的攻击维度</h3>
+      <p class="small" style="margin-bottom:8px">判断该论点真正的软肋在哪里，点击选择：</p>
+      <div id="crossOpts"></div>
+    </div>
+    <div class="card" id="crossWriteCard" style="display:none">
+      <h3>✍️ 写下你的质询问题</h3>
+      <p class="small" style="margin-bottom:8px" id="crossDimHint"></p>
+      <textarea id="crossInput" rows="3" placeholder="例：请问对方辩友，您方的“优先”是和什么比较？……"></textarea>
+      <div class="btn-row"><button class="accent" onclick="crossAsk()">发起质询</button></div>
+    </div>
+    <div id="crossFeedback" style="display:none"></div>
+    <div class="btn-row" id="crossNextRow" style="display:none">
+      <button class="accent" id="crossNextBtn" onclick="crossNext()">下一回合</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 反驳快攻 ================= -->
+<section id="flash">
+  <h2 class="page-title">⚡ 反驳快攻</h2>
+  <p class="page-desc">识别对方发言中的<b>逻辑谬误</b>，选对反驳手段，再写出你的反驳。有效反驳三思路（颜如晶）：先拆逻辑，再做批判者而非杠精，必要时以归谬致胜。</p>
+  <div id="flashPlay">
+    <div class="scorebar">
+      <div class="s"><b id="flashIdx">1</b><span>题号</span></div>
+      <div class="s"><b id="flashRight">0</b><span>正确</span></div>
+    </div>
+    <div class="card">
+      <div class="speech opponent" id="flashSpeech"></div>
+    </div>
+    <div class="card">
+      <h3>选出最锋利的反驳手段</h3>
+      <div id="flashOpts"></div>
+    </div>
+    <div class="card" id="flashWriteCard" style="display:none">
+      <h3>✍️ 写出你的反驳</h3>
+      <textarea id="flashInput" rows="3" placeholder="按你选的手段，组织一句反驳……"></textarea>
+      <div class="btn-row"><button class="accent" onclick="flashSubmit()">亮剑</button></div>
+    </div>
+    <div id="flashFeedback" style="display:none"></div>
+    <div class="btn-row" id="flashNextRow" style="display:none">
+      <button class="accent" onclick="flashNext()">下一题</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 模拟赛场 ================= -->
+<section id="arena">
+  <h2 class="page-title">🏟️ 模拟赛场</h2>
+  <p class="page-desc">走一遍完整赛制。每个环节都有计时器与要点卡——<b>对着手机开口说出来</b>，比默写有效十倍。</p>
+  <div id="arenaSelect">
+    <div class="card">
+      <h3>① 选择辩题</h3>
+      <select id="arenaTopic"></select>
+    </div>
+    <div class="card">
+      <h3>② 选择持方</h3>
+      <div class="pill-nav" id="arenaSide">
+        <button data-s="pro" class="on">正方</button>
+        <button data-s="con">反方</button>
+      </div>
+      <div id="arenaPreview" class="small" style="margin-top:8px"></div>
+    </div>
+    <div class="btn-row"><button class="accent" onclick="arenaStart()">开赛</button></div>
+  </div>
+  <div id="arenaPlay" style="display:none">
+    <div class="card">
+      <div class="timer" id="arenaTimer">03:00</div>
+      <div class="btn-row">
+        <button class="accent" id="arenaToggle" onclick="arenaToggle()">开始</button>
+        <button class="secondary" onclick="arenaReset()">重置</button>
+      </div>
+    </div>
+    <div class="card phase-list" id="arenaPhases"></div>
+    <div class="card" id="arenaGuide">
+      <h3 id="arenaGuideTitle"></h3>
+      <div id="arenaGuideBody" style="font-size:14px"></div>
+      <div class="divider"></div>
+      <ul class="check" id="arenaChecklist"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 对辩 AI ================= -->
+<section id="ai">
+  <h2 class="page-title">🤖 对辩 AI</h2>
+  <p class="page-desc">接入真模型，与 AI 辩手自由交锋、互质互证。API Key 仅保存在你手机浏览器的本地存储中，不经过任何第三方服务器。</p>
+  <div class="card">
+    <h3>⚙️ 模型配置（OpenAI 兼容接口）</h3>
+    <div class="field"><label>服务商预设</label><select id="aiPreset"></select></div>
+    <div class="field"><label>API 地址</label><input type="text" id="aiBase" placeholder="https://api.deepseek.com/v1"></div>
+    <div class="field"><label>模型名</label><input type="text" id="aiModel"></div>
+    <div class="field"><label>API Key <span>（仅存本机浏览器）</span></label><input type="password" id="aiKey" placeholder="sk-..."></div>
+    <div class="btn-row"><button class="accent" onclick="aiSaveCfg()">保存配置</button><span id="aiCfgStatus" class="small" style="align-self:center"></span></div>
+  </div>
+  <div class="card">
+    <h3>⚖️ 对辩设置</h3>
+    <div class="field"><label>辩题</label><select id="aiTopic"></select><input type="text" id="aiCustomTopic" placeholder="或输入自定义辩题（正方 / 反方）" style="margin-top:8px"></div>
+    <div class="field"><label>你的持方</label>
+      <div class="pill-nav" id="aiSide"><button data-s="pro" class="on">我打正方</button><button data-s="con">我打反方</button></div>
+    </div>
+    <div class="field"><label>训练模式</label>
+      <div class="pill-nav" id="aiMode">
+        <button data-s="debate" class="on">自由对辩</button>
+        <button data-s="zhixunMe">AI 质询我</button>
+        <button data-s="zhixunAi">我质询 AI</button>
+        <button data-s="judge">AI 评委复盘</button>
+      </div>
+    </div>
+    <div class="btn-row"><button class="accent" onclick="aiOpen()">开始</button><button class="secondary" onclick="aiClear()">清空对话</button></div>
+  </div>
+  <div class="card" id="aiChatCard" style="display:none">
+    <div id="aiChat" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="divider"></div>
+    <textarea id="aiInput" rows="3" placeholder="发言……（自由辩：短句交锋；被质询：是/不是+一句话）"></textarea>
+    <div class="btn-row">
+      <button class="accent" id="aiSendBtn" onclick="aiSend()">发言</button>
+      <button class="ghost" onclick="aiJudge()">请评委复盘</button>
+    </div>
+    <p class="small" id="aiStatus" style="white-space:pre-wrap;margin-top:8px"></p>
+  </div>
+</section>
+
+<!-- ================= 辩论学堂 ================= -->
+<section id="school">
+  <h2 class="page-title">📖 辩论学堂</h2>
+  <p class="page-desc">教程与书目提炼的规则、技巧与语言。点击目录跳转，支持关键词筛选。</p>
+  <input type="text" id="schoolSearch" placeholder="🔍 搜索：判准 / 归谬 / 质询……" oninput="schoolFilter()">
+  <div class="toc" id="schoolToc"></div>
+  <div id="schoolBody"></div>
+  <div class="card">
+    <h3>📚 延伸书单</h3>
+    <ul class="small" style="padding-left:20px">
+      <li>游梓翔《认识辩论》——辩题分类、举证反驳、论证攻防的体系教科书</li>
+      <li>梁秋阳《深度说服》——立论思维、反驳三思路、质询 1-3-5 法则</li>
+      <li>布朗 &amp; 基利《学会提问》——批判性思维与提问技术</li>
+      <li>麦克伦尼《简单的逻辑学》——论证结构与非逻辑思维形式</li>
+      <li>《狮城舌战》《满座衣冠似雪》——实战辩词与辩手文集</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<nav>
+  <a href="#" data-page="home" class="active"><span class="ic">🏠</span>首页</a>
+  <a href="#" data-page="forge"><span class="ic">🏰</span>立论</a>
+  <a href="#" data-page="cross"><span class="ic">🎯</span>质证</a>
+  <a href="#" data-page="flash"><span class="ic">⚡</span>反驳</a>
+  <a href="#" data-page="arena"><span class="ic">🏟️</span>赛场</a>
+  <a href="#" data-page="ai"><span class="ic">🤖</span>对辩</a>
+  <a href="#" data-page="school"><span class="ic">📖</span>学堂</a>
+</nav>
+
+<script>
+/* =====================================================
+   数据层：辩题库（立论参考 + 质证弱点）
+===================================================== */
+const TOPICS = [
+{
+  id:"wangbao", title:"网络暴力应当 / 不应当优先刑事打击",
+  pro:{
+    def:"“网络暴力”指以网络为载体，针对特定个体的持续性侮辱、诽谤、人肉搜索与威胁行为；“优先刑事打击”指在治理手段的排序中，将刑事责任作为首要威慑，而非仅靠平台自治。",
+    standard:"是否更有利于在最大程度上保护公民人格权益、及时止争并维护网络空间秩序",
+    points:[
+      {t:"刑事打击威慑最强：只有真正入刑，才能切断“网暴即流量、流量即收益”的激励结构，从源头遏制施暴冲动。",
+       weak:"logic", concede:"……您方问到点子上了。单讲“威慑最强”确实跳跃了：我们承认，威慑成立还需要“被抓概率”这个中间变量配合，单靠刑罚本身不足以完全切断激励。",
+       defense:"威慑理论本身就是刑罚学常识，还需要证明什么？", 
+       analysis:"该论点的逻辑链是“入刑→威慑→切断激励”，中间缺了“发现率、查处率”等环节。拆逻辑问“威慑的成立条件是什么”，就能逼出缺口。"},
+      {t:"平台自治与民事手段救济慢、成本高，受害者等不起；刑事程序才是唯一能快速止损的公力救济。",
+       weak:"evidence", concede:"这个我们承认有讨论空间——关于各类救济渠道的平均止损时长，您方若能给出数据，我方需要修正“唯一快速”这个表述。",
+       defense:"常识都知道打官司慢，这还要证据？",
+       analysis:"“民事救济慢、刑事快”是一个经验断言，却拿不出周期对比数据。用“请给出数据”式质询即可命中。"}
+    ],
+    golden:"法不向不法让步，网络不是法外之地——当键盘成为凶器，刑法必须成为盾牌。"
+  },
+  con:{
+    def:"“优先刑事打击”意味着把刑事手段置于治理序列首位；而我方主张，网暴治理的主战场在平台预防与事前拦截，刑事追责是最后手段而非优先选项。",
+    standard:"是否更有利于在伤害发生前预防网暴，并避免刑法滥用误伤正常表达",
+    points:[
+      {t:"刑罚是事后追责，网暴伤害在判决前早已发生；“优先”应给预防——平台实名与拦截前置，才能防患于未然。",
+       weak:"standard", concede:"好，我方承认“优先”的定义之争是本案关键：如果优先指资源排序而非时间顺序，我方需要重新组织论证。",
+       defense:"预防当然重要，但这跟要不要刑事打击有什么关系？",
+       analysis:"正反双方对“优先”的定义不同会导致整个战场偏移。质疑对方的判准——“你用‘时间先后’还是‘资源排序’比较利弊？”——是拆判准的典范。"},
+      {t:"刑事打击门槛高、认定难，大量网暴根本够不上犯罪标准；把资源押在刑法上，会造成“打击少数、放走多数”的错位。",
+       weak:"evidence", concede:"这一点我方确实需要让步：够不上刑事标准的网暴占比，我方目前只能给出估计而非权威统计。",
+       defense:"多数网暴明显恶劣，够不够标准一目了然。",
+       analysis:"该论点建立在“多数网暴达不到刑事门槛”这个未证成的比例判断上，追问数据来源即可命中。"}
+    ],
+    golden:"刑不可知则威不可测？不——刑之滥用，恰是寒蝉之始。刑法应是最后的盾，而非最前的矛。"
+  }
+},
+{
+  id:"aiflow", title:"AI 生成内容应当 / 不应当受著作权保护",
+  pro:{
+    def:"“AI生成内容”指人在提示词选择、参数调整、结果筛选中付出智力投入后由AI产出的表达成果；“受著作权保护”指获得与作品同等的权利地位。",
+    standard:"是否更有利于激励创作投入与文化产业的持续繁荣",
+    points:[
+      {t:"AI只是画笔的升级：提示词设计、反复调试与筛选体现了人的独创性智力投入，符合“智力成果”要件，理应保护。",
+       weak:"logic", concede:"您方追问得对——“投入智力”不等于“投入产生了独创性表达”，这两者之间我方的推导确实存在跳跃。",
+       defense:"人用了AI就是人的创作，这还需要论证？",
+       analysis:"“人付出了劳动→成果具有独创性”是典型的逻辑跳跃（诉诸辛劳理论早被裁判否定）。追问“劳动能否直接等同于独创性表达”即可命中。"},
+      {t:"若不保护，AI创作将陷入“无人拥有权利→无人愿意投资→产业萎缩”的恶性循环，损害的是整个内容产业。",
+       weak:"evidence", concede:"关于“不保护导致投资萎缩”的行业实证，我方目前只有趋势性判断，缺乏量化研究支撑。",
+       defense:"没有保护谁还创作？这是不言自明的。",
+       analysis:"恶性循环是预测性论断，需要行业数据或至少可类比的先例（如数据库权争议）支撑。要数据即命中。"}
+    ],
+    golden:"从石雕到油彩再到像素，工具每一次革命都曾被质疑“不算创作”——今天轮到AI，历史将再次给出答案。"
+  },
+  con:{
+    def:"著作权保护的客体是“人的独创性表达”。AI生成内容是算法对海量训练数据的概率重组，缺乏人类作者的人格投射，不应纳入保护。",
+    standard:"是否更有利于维护著作权制度“保护人类创造”的立法本意与权利体系的稳定性",
+    points:[
+      {t:"著作权以人格与独创性为根基，AI产出是概率重组而非人格表达，赋予著作权等于掏空制度根基。",
+       weak:"def", concede:"如果独创性判定不要求“人格投射”而只看客观表达效果，我方这个论点确实需要重构。",
+       defense:"AI当然没有人格，所以结论显然成立。",
+       analysis:"论点成立依赖“独创性必须包含人格投射”这一对核心概念的单方定义。拆定义——问“独创性的法定判断标准是否包含人格要素”——即可命中。"},
+      {t:"保护AI内容将造成海量低质量产出涌入版权池，抬高检索与授权成本，反而伤害人类创作者。",
+       weak:"logic", concede:"“大量涌入”到“伤害创作者”之间，我方承认缺少对版权市场消化能力的中间论证。",
+       defense:"垃圾多了当然挤占好作品的空间。",
+       analysis:"从“数量激增”推“损害生态”缺少市场机制层面的中间环节，属滑坡式论证，追问传导链条即可命中。"}
+    ],
+    golden:"著作权守护的是人类的心跳与思想，不是机器吐出的概率之影。"
+  }
+},
+{
+  id:"renzui", title:"认罪认罚从宽制度利大于弊 / 弊大于利",
+  pro:{
+    def:"认罪认罚从宽指犯罪嫌疑人自愿如实供述、接受处罚，从而获得程序从简与实体从宽的制度安排；“利弊”比较以司法整体效果为准。",
+    standard:"是否更有利于实现司法效率、公正与人权保障的平衡",
+    points:[
+      {t:"案多人少是司法常态，认罪认罚以协商分流大量简单案件，让司法资源集中于疑难案件，整体正义反而提升。",
+       weak:"logic", concede:"“效率提升”到“整体正义提升”之间确实有断层——如果错案率上升，效率再高也谈不上正义，这一点我方需要补充论证。",
+       defense:"分流案件当然让法官更从容，结论自然成立。",
+       analysis:"效率与正义之间需要“质量不因提速而下降”这个隐含前提。追问“效率红利如何保证不转化为错案”即可命中。"},
+      {t:"从宽激励给了被告人一条低对抗、低风险的出路，减少漫长诉讼对当事双方的消耗，本身就是人权保障的进步。",
+       weak:"evidence", concede:"关于“被告人真实自愿比例”的实证数据，我方掌握的调研样本有限，确实不足以完全支撑“本身就是进步”的全称判断。",
+       defense:"制度设计上允许反悔，自愿性当然有保障。",
+       analysis:"“制度允许反悔”不等于“实践中自愿”，需要引用自愿性审查的实证研究或无罪辩护率数据。追问实证即命中。"}
+    ],
+    golden:"正义不应迟到，也不应昂贵——协商性司法让公正在快与慢之间找到第三条路。"
+  },
+  con:{
+    def:"认罪认罚从宽在实践中已从“可以从宽”滑向“量化从宽承诺”，辩方谈判空间被压缩；“弊大于利”着眼于其对辩护权与司法中立的侵蚀。",
+    standard:"是否更有利于坚守程序正义底线与防止错案",
+    points:[
+      {t:"检察官既控诉又给出量刑承诺，控审职能隐性合流，法官被具结书“绑架”，审判独立被架空。",
+       weak:"def", concede:"若将具结书理解为“量刑建议”而非“量刑承诺”，且法院调整率足够高，我方“架空”的表述确实过重。",
+       defense:"检察院本来就有量刑建议权，何来架空？",
+       analysis:"论点依赖把“量刑建议”扩大定义为“量刑承诺”。拆定义——区分建议与承诺、追问法院采纳率与调整率——即可命中。"},
+      {t:"“从宽”幅度不透明、法官说理义务弱化，无辜者可能因惧怕“不认罪则重判”而被迫认罪，酿成错案。",
+       weak:"evidence", concede:"“无辜者被迫认罪”的系统性证据，我国公开研究中确实稀少，我方多以域外辩诉交易的教训作类比——承认这是类比论证而非本土实证。",
+       defense:"无枉认罪的案例时有曝光，足以说明问题。",
+       analysis:"以个案或域外经验支撑本土制度判断，属证据不充分。追问“有无本土系统性数据”即可命中。"}
+    ],
+    golden:"程序正义是看得见的正义——当认罪变成谈判桌上的筹码，我们要问：被省略的程序，省掉了什么？"
+  }
+},
+{
+  id:"suipian", title:"碎片化学习利大于弊 / 弊大于利",
+  pro:{
+    def:"碎片化学习指利用通勤、排队等零散时间，以短视频、音频课、知识卡片等为载体进行的即时性学习；“利弊”看其对普通人学习总量与习惯的影响。",
+    standard:"是否更有利于降低学习门槛、扩大全民学习的总收益",
+    points:[
+      {t:"碎片化学习让“没时间”不再是借口，把原本浪费的零散时间转化为学习时间，总学习量显著增加。",
+       weak:"logic", concede:"“时间利用率提高”不等于“学习效果提高”——若碎片内容遗忘率高，总量增加也可能是无效增加，这一点我方承认需要补充论证。",
+       defense:"多学总比不学好，这难道不是显然的？",
+       analysis:"从“学习时长增加”到“学习收益增加”缺少“留存率/体系性”的中间环节。追问“记住多少、能否迁移”即可命中。"},
+      {t:"碎片化是通往体系化的入口：轻量内容激发兴趣，再引导用户进入深度学习，是学习金字塔的底部基座。",
+       weak:"evidence", concede:"“从碎片入口到深度学习”的转化率数据，目前行业的公开研究确实不充分，我方以部分平台报告佐证，承认其非权威。",
+       defense:"兴趣是最好的老师，入口论不证自明。",
+       analysis:"“入口→转化→体系化”是三段预测链，需要留存与转化数据。要数据即命中。"}
+    ],
+    golden:"涓滴入海——每个五分钟的积累，都是普通人为自己抢来的成长。"
+  },
+  con:{
+    def:"碎片化学习的本质特征是知识的切割与被动推送；“弊大于利”指其系统性塑造了浅思考的认知习惯。",
+    standard:"是否更有利于培养深度理解与可迁移的真知",
+    points:[
+      {t:"碎片化内容以“爽点”为设计目标，驯化的是即时满足的注意力模式，长期损害深度思考能力。",
+       weak:"def", concede:"如果只把“用零散时间学习”算作碎片化学习、而排除算法推送这一特征，我方对“驯化注意力”的批评确实打不出去。",
+       defense:"碎片学习当然是碎片化内容，这难道有歧义？",
+       analysis:"论点成立依赖把“碎片化学习”定义为“被算法切割的被动消费”。拆定义——区分“主动利用零散时间”与“被动接受切割内容”——即可命中。"},
+      {t:"知识卡片制造“我学过了”的错觉，收藏代替了消化，点赞代替了思考，是典型的认知伪满足。",
+       weak:"logic", concede:"“收藏行为”到“伪满足心理”之间，我方确实缺乏心理学实验的直接支撑，更多依赖对现象的推断。",
+       defense:"收藏了不看不是常识吗？",
+       analysis:"“收藏≠学习”是常识，但“收藏→错觉→排斥深度学习”的因果链需要实证。追问链条证据即可命中。"}
+    ],
+    golden:"碎片填不满深渊——用五分钟的知识，对抗不了需要五年抵达的问题。"
+  }
+},
+{
+  id:"sixing", title:"死刑应当 / 不应当废除",
+  pro:{
+    def:"“废除死刑”指在立法上取消死刑作为法定刑，以终身监禁等刑罚替代；“应当废除”是对现代法治文明方向的规范性主张。",
+    standard:"是否更有利于彰显生命权至上、防止不可逆错案并符合世界刑罚发展趋势",
+    points:[
+      {t:"生命权是最高位阶的权利，国家不应以制度化的方式剥夺生命；刑罚的正当性止步于终身自由刑。",
+       weak:"logic", concede:"“生命权最高位阶”推不出“一切情形下均不得剥夺”——若承认正当防卫中致死的正当性，我方的前提与结论之间确有张力。",
+       defense:"生命权当然至高无上，结论显然。",
+       analysis:"从“生命权至上”到“国家一律不得死刑”存在中间缺环（如何处理极端恶性犯罪与民众正义感）。追问例外情形即可命中。"},
+      {t:"错案不可逆：聂树斌、呼格吉勒图……凡死刑皆有误判概率，废除死刑是给司法错误留一条退路。",
+       weak:"evidence", concede:"“误判概率”在不同罪名、不同证据结构下差异极大，我方以极少数冤案推广到全部死刑判决，承认存在以偏概全的风险。",
+       defense:"冤案铁证如山，还用统计吗？",
+       analysis:"用个别冤案推断系统性风险，属以偏概全。追问“整体误判率与证据标准的关系”即可命中。"}
+    ],
+    golden:"如果我们必须承认法官是人、证据会说谎，那么唯一不可撤销的刑罚，就不该出现在法典里。"
+  },
+  con:{
+    def:"“不应当废除”主张对罪行极其严重者保留死刑，以实现罪刑均衡与一般预防；废除与否应以本国治安与民意为语境。",
+    standard:"是否更有利于实现罪刑相适应与一般预防效果",
+    points:[
+      {t:"对蓄意杀人等极端罪行，死刑是罪刑均衡的唯一兑现；废除死刑意味着等价报应的断裂，动摇民众法感情。",
+       weak:"standard", concede:"如果判准不采“民意法感情”而采“人权基准”，我方确实需要换一套论证——判准之争我方认输一半。",
+       defense:"杀人偿命天经地义，判准不言自明。",
+       analysis:"论点建立在“罪刑均衡=等价报应”的判准上。质疑判准——问“刑罚目的究竟是报应还是预防”——即可命中。"},
+      {t:"实证研究显示死刑对预谋性重罪具有一般威慑力，废死将提高潜在犯罪人的冒险收益。",
+       weak:"evidence", concede:"关于死刑威慑力的实证，学界长期存在“威慑效应不显著”的对立研究，我方承认单方面引用存疑。",
+       defense:"死刑当然有威慑力，常识而已。",
+       analysis:"死刑威慑力是犯罪学界著名争议（Ehrlich 与后续研究的反复辩论），单方断言即证据硬伤。要求出示对立研究即可命中。"}
+    ],
+    golden:"死刑存废不是文明的标签，而是社会能否给出替代正义的考卷——在答卷完成之前，仓促交卷是另一种傲慢。"
+  }
+},
+{
+  id:"lvshi", title:"律师应当 / 不应当为“确有其罪”的当事人全力辩护",
+  pro:{
+    def:"“全力辩护”指在法律与职业伦理许可范围内穷尽辩护手段；“确有其罪”指在多数证据下其行为构成犯罪，但仍未经终审裁判确认。",
+    standard:"是否更有利于维护程序正义与整体法治的长期运转",
+    points:[
+      {t:"辩护权是每个人的权利而非“好人特权”，对抗式审判靠双方全力以赴才能逼近真相，律师全力辩护是对法治的整体投资。",
+       weak:"def", concede:"如果把“全力”限定为程序性辩护与量刑辩护、而不包括对抗证据本身，我方“整体投资”的论证确实需要收缩。",
+       defense:"全力就是法律允许范围内不留余力，这有歧义吗？",
+       analysis:"论点成立依赖把“全力”扩张到“对抗控方证据”的边界。拆定义——追问“全力是否包含对确凿证据的无理缠讼”——即可命中。"},
+      {t:"无罪推定之下“确有其罪”只是控方的判断，冤案史证明这一判断会错，律师的怀疑本身就是制度纠错装置。",
+       weak:"evidence", concede:"冤案在全部刑事判决中的比例，公开研究确实有限，我方以个别重大冤案说明系统性问题，承认存在以偏概全的风险。",
+       defense:"聂树斌们还不够吗？",
+       analysis:"用少数极端冤案支撑“控方判断经常出错”的全称判断，属证据不充分。追问冤案发生率与证据标准的关系即可命中。"}
+    ],
+    golden:"律师辩护的从来不是罪行，而是“指控必须经得起检验”这条法治的底线。"
+  },
+  con:{
+    def:"“全力辩护”若指不惜手段将明知有罪者脱罪，则应受职业伦理约束；我方主张辩护的边界在法律与诚信，而非“不择手段”。",
+    standard:"是否更有利于守住司法诚信与辩护制度的正当性根基",
+    points:[
+      {t:"若“全力”包含伪造证据、诱导翻供、拖延诉讼等手段，辩护将异化为对司法诚信的侵蚀，最终反噬所有被告人的辩护权。",
+       weak:"def", concede:"如果“全力”只指合法手段的充分使用，我方对“侵蚀诚信”的批评确实失去了靶子——这个概念的界分是本案关键。",
+       defense:"全力辩护当然是穷尽一切手段，这难道不是常识？",
+       analysis:"反方论点建立在对“全力”的扩大解释上。拆定义——区分“合法穷尽”与“不择手段”——即可瓦解攻击。"},
+      {t:"为确证罪犯做全案无罪辩护会无谓消耗司法资源、二次伤害被害人，辩护重心应在量刑与程序救济。",
+       weak:"std", concede:"若判准不采“司法资源消耗”而采“当事人权利最大化”，我方确实需要重新组织论证——判准之争我方让出一步。",
+       defense:"浪费司法资源当然是坏事，标准不言自明。",
+       analysis:"论点建立在“资源消耗优先”的判准上。质疑判准——“辩护制度的目的是什么”——即可命中。"}
+    ],
+    golden:"真正的辩护艺术，是在诚信的边界内把法律用到极致——而不是把边界撞碎。"
+  }
+},
+{
+  id:"shashu", title:"大数据“杀熟”应当立法禁止 / 应当依靠市场自律",
+  pro:{
+    def:"“杀熟”指平台利用用户画像，对老客户或高粘性用户收取高于新客的价格；“立法禁止”指以法律明文禁止价格歧视性算法。",
+    standard:"是否更有利于保护消费者公平交易权并矫正平台激励",
+    points:[
+      {t:"个体对算法定价无从察觉、举证困难，市场自律在信息不对称面前结构性失灵，唯有立法能矫正。",
+       weak:"logic", concede:"“自律失灵”不必然推出“立法禁止”——行业规范、监管约谈、集体诉讼等替代手段我方确实未逐一排除。",
+       defense:"信息不对称下消费者当然无能为力，只能靠法律。",
+       analysis:"从“市场失灵”到“必须立法禁止”跳过了替代方案的比较。追问“还有哪些矫正手段、为何都不够”即可命中。"},
+      {t:"公平交易权是法定权利，立法是权利兑现的必要成本，且统一执法的成本远低于亿万消费者各自维权的成本。",
+       weak:"evidence", concede:"关于执法成本与个体维权成本的对比，我方只有方向性判断，缺乏量化研究支撑。",
+       defense:"这还用算吗？法律一旦出台当然一劳永逸。",
+       analysis:"“统一执法成本更低”是需要数据的经验断言（执法覆盖率、查处率）。要数据即可命中。"}
+    ],
+    golden:"算法可以比人更懂你，但不能比法律更敢于欺负你。"
+  },
+  con:{
+    def:"“依靠市场自律”指以竞争压力、平台声誉与行业规范为主要矫正机制，法律仅兜底重大侵权；“禁止”指对差异化定价一刀切取缔。",
+    standard:"是否更有利于在矫正乱象的同时保留算法定价的正功能",
+    points:[
+      {t:"精准定价与差异化补贴一体两面，一刀切禁止会误伤新客优惠、会员折扣等正当机制，立法成本高于收益。",
+       weak:"def", concede:"若立法只禁止“基于用户画像的价格歧视”而明确保留“基于成本与活动的优惠”，我方对“误伤”的批评确实打不中——界分是关键。",
+       defense:"杀熟和差异化定价当然是一回事。",
+       analysis:"论点依赖把“杀熟”与“一切差异化定价”混同。拆定义——区分“画像歧视”与“成本/活动差异”——即可命中。"},
+      {t:"竞争与舆论曝光是更快的矫正器：平台惧怕流失用户，已有企业因杀熟舆情主动整改，监管应保持谦抑。",
+       weak:"evidence", concede:"“舆情整改”能否成为普遍机制，我方只有个案，缺乏系统性数据——承认这是归纳不充分。",
+       defense:"用户用脚投票的力量还不明显吗？",
+       analysis:"以个别整改案例推断市场自纠的普遍有效性，属证据不充分。追问数据即可命中。"}
+    ],
+    golden:"好监管是让市场长出骨头，而不是给市场戴上镣铐。"
+  }
+},
+{
+  id:"qiling", title:"校园欺凌治理应当以教育感化为主 / 以惩戒威慑为主",
+  pro:{
+    def:"“教育感化为主”指以心理干预、关系修复、家校协同为核心手段；“惩戒威慑”指以处分、训诫乃至司法介入为主要手段。",
+    standard:"是否更有利于从根本上减少欺凌行为并保护受害者",
+    points:[
+      {t:"欺凌者多为未成年人，人格尚可塑，过度惩戒的标签效应会固化攻击性，教育才能斩断欺凌的心理根源。",
+       weak:"evidence", concede:"“标签效应”在校园欺凌场景中的实证强度，我方掌握的本土研究确实有限，多以西方犯罪标签理论类比。",
+       defense:"标签化未成年人的危害是心理学常识。",
+       analysis:"以域外理论支撑本土制度判断，需本土实证。追问数据即可命中。"},
+      {t:"欺凌是关系与环境问题，孤立的个案惩戒不改变土壤，只有教育感化能重建班级生态，实现治本。",
+       weak:"logic", concede:"“治本”与“止损”是两个目标——教育见效慢，在被欺凌者持续受害的当下，我方承认“治本”无法替代“止损”。",
+       defense:"治本当然优于治标，这还需要论证？",
+       analysis:"“治本优先”预设了受害者能等到“本”被治好。追问“当下的受害者怎么办”即可命中。"}
+    ],
+    golden:"我们惩罚的是行为，拯救的是人——教育的边界，就是文明的边界。"
+  },
+  con:{
+    def:"“惩戒威慑为主”指对欺凌行为设定明确、确定、及时的行为后果，使欺凌成本高于收益；“惩戒”指正当处分与训诫，不含体罚。",
+    standard:"是否更有利于即时保护受害者并形成有效的行为矫正",
+    points:[
+      {t:"无后果的欺凌会持续升级，威慑是当下唯一的止损装置；被欺凌者等不起一场漫长的感化教育。",
+       weak:"def", concede:"若把“惩戒”界定为适度的处分而非排斥教育手段，我方“教育等不起”的对比确实弱化——二者可以并用，之争在于谁为主。",
+       defense:"惩戒当然不是体罚，这有歧义吗？",
+       analysis:"论点依赖把“惩戒为主”限定为“不含教育的即时处分”。拆定义——澄清“为主”是否排斥并用——即可命中。"},
+      {t:"受害者对正义的制度性回应有强需求，处理结果的确定性直接关系其安全感与对制度的信任，威慑必须前置。",
+       weak:"std", concede:"如果判准不采“受害者安全感”而采“长期行为矫正率”，我方需要重新比较——判准之争我方退让。",
+       defense:"给受害者公道，这还需要讨论标准？",
+       analysis:"论点建立在“安全感优先”的判准上。质疑判准——“治理目标是止损还是矫正”——即可命中。"}
+    ],
+    golden:"迟来的感化救不了正在流血的少年——确定而及时的后果，才是校园里最早亮起的灯。"
+  }
+},
+{
+  id:"fangchenmi", title:"未成年人短视频防沉迷应当强制 / 应当引导",
+  pro:{
+    def:"“强制”指由平台对未成年人账号实施强制时长限制、时段禁用与内容过滤；“引导”指以家庭教育、媒介素养教育为主的柔性方式。",
+    standard:"是否更有利于切实降低未成年人短视频沉迷及其损害",
+    points:[
+      {t:"未成年人自控功能尚未发育成熟，指望自制力对抗推荐算法是让羊群自己筑篱，强制切断是唯一有效的物理隔离。",
+       weak:"logic", concede:"“有效”与“唯一有效”之间有距离——若引导加家庭监管能达到相近效果，我方“唯一”的表述需要退让。",
+       defense:"自控力不足当然只能强制，这还有疑问？",
+       analysis:"从“自控不足”到“强制是唯一手段”跳过了对引导效果的排除论证。追问“引导方案为何无效”即可命中。"},
+      {t:"推荐算法以时长为商业目标，平台的逐利本性决定了引导机制会被设计得形同虚设，唯有外部强制可信。",
+       weak:"evidence", concede:"关于“防沉迷机制形同虚设”的系统性证据，我方多以媒体调查佐证，缺乏权威统计，承认证据强度有限。",
+       defense:"平台逐利是常识，引导当然是空话。",
+       analysis:"以媒体个案调查支撑全称判断，证据不充分。要求权威数据即可命中。"}
+    ],
+    golden:"在算法与多巴胺的围猎场里，给孩子立栏杆不是限制自由，而是文明对幼者的基本礼让。"
+  },
+  con:{
+    def:"“引导”指以家庭约定、媒介素养教育、内容分级与正向激励为主，帮助孩子建立自主管理能力；强制仅作最后兜底。",
+    standard:"是否更有利于培养长期自控力并避免手段的负作用",
+    points:[
+      {t:"强制手段易催生规避（借号、换设备）与亲子对抗，一刀切切断还误伤学习类内容，负作用可能大于收益。",
+       weak:"evidence", concede:"“规避行为与亲子冲突的发生率”缺乏系统数据，我方以现象观察为主，承认需要实证支撑。",
+       defense:"孩子找借口绕过限制不是很常见吗？",
+       analysis:"以日常观察支撑发生率判断，证据不充分。要数据即可命中。"},
+      {t:"沉迷的根源在家庭教育缺位与生活内容匮乏，外部强制不改变根源；自主管理能力只能靠引导养成，这才是终身受益的解。",
+       weak:"def", concede:"若把“强制”理解为“与引导并行的兜底工具”而非唯一手段，我方“外部强制不改变根源”的说法确实需要修正。",
+       defense:"强制怎么管得了根源问题？",
+       analysis:"论点依赖把强制界定为“排斥家庭引导的单一手段”。拆定义——澄清工具与手段的关系——即可命中。"}
+    ],
+    golden:"我们今天替孩子关掉手机，不如教会孩子关掉心里的开关——前者管一时，后者管一生。"
+  }
+},
+{
+  id:"liangxing", title:"人工智能量刑辅助应当 / 不应当引入刑事司法",
+  pro:{
+    def:"“量刑辅助”指以算法对类案量刑提供参考区间与偏离预警，最终决定权仍在法官，属人机协同而非机器裁判。",
+    standard:"是否更有利于实现量刑公正与司法效率的平衡",
+    points:[
+      {t:"量刑辅助能统一量刑尺度，压缩“同案不同判”与情绪化量刑的空间，让公正以可核验的方式呈现。",
+       weak:"std", concede:"若判准不采“一致性”而采“个案公正”，我方确实要退一步——一致性只是公正的近似，个案裁量才指向公正本身。",
+       defense:"同案同判是公正的基本要求，这有错吗？",
+       analysis:"论点把“量刑一致”默认为“量刑公正”。质疑判准——一致性与个案裁量的关系——即可命中。"},
+      {t:"辅助定位决定了风险可控：法官保留最终决定权，算法只提供参考与预警，人机协同优于纯人工经验。",
+       weak:"def", concede:"若实证显示法官对系统建议的依赖度极高（自动化偏见），“辅助”与“决定”的实际界线确实会模糊——这一点我方需要补充数据。",
+       defense:"决定权在法官手里，风险当然可控。",
+       analysis:"论点依赖“辅助≠影响”的假设。拆定义——追问自动化偏见下“参考”的实际权重——即可命中。"}
+    ],
+    golden:"让算法把尺子递给法官，而不是把法官换算法——技术应站在正义身后，而非对面。"
+  },
+  con:{
+    def:"“不应当引入”指在算法规制与责任机制成熟之前，量刑辅助的系统性风险大于收益；量刑应回归法官亲历性与说理义务。",
+    standard:"是否更有利于坚守法官亲历、可问责性与防止系统性错判",
+    points:[
+      {t:"训练数据携带历史偏差，黑箱模型把偏差固化并放大，被边缘化群体将面临系统性的从重预测。",
+       weak:"logic", concede:"“数据偏差”到“判决偏差”之间并非必然——若引入偏差审计与剔除机制，传导链条可被打断，我方承认存在技术缓解方案。",
+       defense:"垃圾进垃圾出，偏差当然进判决。",
+       analysis:"从“数据有偏”推“判决必然有偏”跳过了审计与矫正环节。追问缓解机制即可命中。"},
+      {t:"量刑说理是法官对社会的责任，算法介入后错案无法问责——你不能审判一个算法，也不能让算法坐上被告席。",
+       weak:"evidence", concede:"关于“算法介入后问责失灵”的实际案例，域外有 COMPAS 争议，我国本土实践尚少——承认这是前瞻性判断而非既成事实。",
+       defense:"出了错却找不到人负责，这难道不危险？",
+       analysis:"以域外个案（COMPAS 累犯评估争议）支撑本土制度结论，属类比论证而非实证。追问本土证据即可命中。"}
+    ],
+    golden:"刑罚的分量连着人的一生——它应当从法官的良知与说理中流出，而不是从黑箱的概率里吐出。"
+  }
+}
+];
+
+/* 快攻题库：反驳手段识别 */
+const FLASH_POOL = [
+  {s:"我邻居吃了三个月某保健品，血压降下来了——所以这保健品对所有高血压患者都有效。",
+   opts:["归谬法","样本偏差反驳（数据反杀）","范围切割","类比反杀"], c:1,
+   ref:"“个案体验不等于疗效证据。您方的样本是一个人，没有对照组、没有概率，按这个逻辑，中彩票的人也能证明人人都该买彩票。”",
+   why:"以孤例支撑全称结论，是典型的以偏概全/样本不典型。"},
+  {s:"如果不把所有短视频 App 全部禁掉，孩子们的学习能力迟早彻底毁灭！",
+   opts:["拆定义","利弊对冲","归谬法","受身反驳"], c:2,
+   ref:"“按您方‘不禁即毁灭’的逻辑，人类历史上每一项新媒介——小说、电视、游戏——都该被禁，可文明恰恰在每个‘毁灭预言’之后继续进步。”",
+   why:"滑坡谬误：把渐进风险推到极端终点。归谬可将其推至荒谬。"},
+  {s:"你反对这个方案？那你倒是拿个更好的来啊！拿不出来就闭嘴。",
+   opts:["指出虚假两难","拆判准","因果倒置","诉诸权威反驳"], c:0,
+   ref:"“批评方案不需要先提交替代方案——就像陪审员不必亲自犯罪才能定罪。发现问题与提供方案是两种能力，您方把它们捆绑成二选一了。”",
+   why:"虚假两难：把“质疑”与“给出替代”强行捆绑。"},
+  {s:"成功人士个个都早起，所以早起是成功的根本原因。",
+   opts:["范围切割","因果倒置反驳","归谬法","拆价值"], c:1,
+   ref:"“您方把相关当因果了：也许是成功带来的自律让人得以早起，而非早起造就成功。因果的箭头方向，您方恰好画反了。”",
+   why:"因果倒置＋幸存者偏差。"},
+  {s:"凡是免费的东西都暗藏陷阱，收费的才值得信任——所以这个免费课程一定有问题。",
+   opts:["归谬法","拆定义","利弊对冲反驳","类比反杀"], c:2,
+   ref:"“‘免费’与‘陷阱’不存在必然绑定：开源软件、公共图书馆、义务教育都是免费且可信的。全称断言只需一个反例即可击穿。”",
+   why:"全称判断绝对化，用反例+利弊对冲回应。"},
+  {s:"我们公司业绩下滑，就是因为上次招了几个没有大厂背景的员工。",
+   opts:["指出错误归因","受身反驳","拆逻辑之外的重塑","范围切割"], c:0,
+   ref:"“业绩受市场、战略、产品多重变量影响。您方把多因一果压缩成单因归责，恰恰回避了真正该复盘的变量。”",
+   why:"错误归因／单因谬误。"},
+  {s:"这份报告抽样了100名本校学生，就能代表全国青年的消费观。",
+   opts:["数据反杀（样本质疑）","归谬法","拆价值","类比反杀"], c:0,
+   ref:"“100人的便利样本，既无代表性也无随机性，误差范围远大于您方结论的断言强度。这份数据撑不起全国性的推论。”",
+   why:"样本量与代表性双重缺陷，直接做数据反杀。"},
+  {s:"你说这本书写得不好——可你自己写过书吗？写不出来就没资格批评。",
+   opts:["范围切割","指出诉诸人身","利弊对冲","受身反驳"], c:1,
+   ref:"“评价的资格来自标准，不来自作者的履历。按您的逻辑，观众不会踢球就无权评价球赛，美食家不会做菜就无权评价餐厅。”",
+   why:"诉诸人身／你没资格谬误（tu quoque 变体）。"},
+  {s:"要么全力冲刺考研，要么躺平摆烂——中间的路都是自我安慰。",
+   opts:["归谬法","拆定义","指出虚假两难","因果倒置"], c:2,
+   ref:"“考研与躺平之间存在光谱而非断崖：在职备考、先就业再择校都是真实存在的路径。人为砍掉中间选项，是为了让结论显得必然。”",
+   why:"虚假两难／非黑即白。"},
+  {s:"家长都给孩子报补习班，所以不报班的父母一定是不负责任的。",
+   opts:["范围切割反驳","诉诸权威","归谬法","拆价值"], c:0,
+   ref:"“从众不等于正确。报班是手段不是义务——教育责任的判定标准是孩子的真实需求是否被回应，而非是否随大流。”",
+   why:"诉诸大众＋概念偷换（把“报班”偷换成“负责任”）。"}
+];
+
+/* 金句池 */
+const GOLDENS = [
+  {t:"辩论的目的不是打败对方，而是让评委与观众——看见你方的世界更完整。", src:"辩论筑基 · 总纲"},
+  {t:"标准化的套路，是方便你理解入门的手段，不是最终追求的目标。", src:"《辩论筑基》教程结语"},
+  {t:"做批判者，而非杠精——反驳的锋利来自对逻辑的忠诚，而非对情绪的纵容。", src:"《深度说服》颜如晶"},
+  {t:"质询不是提问，是设计。每一次追问都是缩小包围圈的一步。", src:"质询五步诀"},
+  {t:"定义权就是战场选择权——谁定义了概念，谁就选择了在哪里开战。", src:"立论四件套"},
+  {t:"为了带你看月亮，有时候我得先让你看手指。", src:"《辩论筑基》教程前言"}
+];
+
+/* 学堂内容 */
+const LESSONS = [
+{id:"rule", title:"一 · 辩论是什么", html:`
+<h3>一 · 辩论是什么</h3>
+<p>竞技辩论是<b>持方对抗下的说服活动</b>：你为持方辩护，而非为个人偏好辩护。赢的不是嗓门，是<b>框架与反应</b>。</p>
+<h4>四大环节</h4>
+<table>
+<tr><th>环节</th><th>任务</th><th>要诀</th></tr>
+<tr><td>立论（申论）</td><td>搭建本方论证框架</td><td>要稳：定义、判准、论点齐备</td></tr>
+<tr><td>质询（盘问）</td><td>用问题拆对方框架</td><td>要狠：封闭式提问、连环追问</td></tr>
+<tr><td>自由辩论</td><td>短兵相接的攻防拉扯</td><td>要快：短、准、狠</td></tr>
+<tr><td>结辩</td><td>收拾战场 + 价值升华</td><td>要深：跳出细节，升维收束</td></tr>
+</table>
+<h4>辩位分工</h4>
+<ul>
+<li><b>一辩</b>：立论陈词与质询回应，要求表达稳、稿子熟。</li>
+<li><b>二辩</b>：精准反驳 + 强化己方（驳论与申论）。</li>
+<li><b>三辩</b>：质询与自由辩的精准打击，掌控节奏。</li>
+<li><b>四辩</b>：总结全场、切割战场、价值升华。</li>
+</ul>
+<div class="quote">法律人视角：质询之于辩论，恰如交叉询问之于法庭——目的都不是“聊天”，而是用预设的问题链固定对己方有利的事实与让步。</div>`},
+{id:"lilun", title:"二 · 立论四件套", html:`
+<h3>二 · 立论四件套</h3>
+<p>一辩稿是全队的地基，结构固定：<span class="hl">定义 → 判准 → 论点 → 升华</span>。</p>
+<h4>1. 定义：界定关键词</h4>
+<ul><li>定义权就是战场选择权——先定义，再讨论。</li>
+<li>对辩题内每个重要概念给出合理界定，避免被对手曲解。</li>
+<li>示例：「网络暴力是指……；“优先”指治理资源排序中的位置。」</li></ul>
+<h4>2. 判准：给出比较标准</h4>
+<ul><li>句式：「判断是否 XX，应看是否……」</li>
+<li>判准必须<b>双方可共通</b>，否则整场辩论沦为各说各话。</li></ul>
+<h4>3. 论点：2–3 个分论点</h4>
+<ul><li>每个论点一句话说清，逻辑层次分明（如社会/经济/伦理，或短期/长期）。</li>
+<li>论点之间要互为犄角，不要同义反复。</li></ul>
+<h4>4. 升华：一句话收尾</h4>
+<ul><li>把辩题抬到价值层面，给评委留下记忆点。</li></ul>
+<h4>模板句式</h4>
+<div class="quote">“我方认为 XX。开宗明义，XX 是指……。判断的标准在于……。基于此，我方有三点论证：第一……第二……第三……”</div>`},
+{id:"zhixun", title:"三 · 质询五步与防守", html:`
+<h3>三 · 质询五步与防守</h3>
+<p>质询的本质不是提问，是<span class="hl">设计</span>：用问题拆对方的城堡。</p>
+<h4>进攻五步</h4>
+<ol>
+<li><b>设陷阱</b>：预埋一个对方难以回答的问题</li>
+<li><b>逼表态</b>：让对方明确回答“是 / 不是 / 二选一”</li>
+<li><b>抓矛盾</b>：对比前后表述，找出不一致</li>
+<li><b>缩小包围</b>：限制对方退路，压缩解释空间</li>
+<li><b>确认战果</b>：对方一旦让步，立刻总结“可见对方也承认 XX”</li>
+</ol>
+<h4>提问技术</h4>
+<ul>
+<li><b>封闭式提问</b>：多问“是不是、对不对”，少问“为什么”。</li>
+<li><b>连环追问</b>：对模糊回答连续追问 2–3 层，直到暴露矛盾。</li>
+<li><b>1-3-5 法则</b>（胡渐彪）：回答问题时，1 句结论 + 3 句理由，最多 5 句收束。</li>
+</ul>
+<h4>被质询时的防守</h4>
+<ul>
+<li><b>答简不答繁</b>：「是/不是 + 一句话」，不给对方借题发挥的空间。</li>
+<li>对预埋陷阱保持警觉：察觉问题链的走向后，可用限定词回应而非整体承认。</li>
+<li>不被带节奏：对方抢结论时，回到「请先回答我方问题」。</li>
+</ul>
+<div class="quote">法律人视角：这与交叉询问的规则同构——诱导性提问固定事实，一问一答锁定让步，最后在总结中“宣读战果”。</div>`},
+{id:"fanbo", title:"四 · 反驳与拆解", html:`
+<h3>四 · 反驳与拆解</h3>
+<h4>拆解公式（五拆）</h4>
+<p><span class="hl">拆定义 → 拆标准 → 拆逻辑 → 拆论据 → 拆价值</span></p>
+<table>
+<tr><th>手段</th><th>方法</th><th>示例</th></tr>
+<tr><td>归谬</td><td>推到极致，显荒谬</td><td>“按您方逻辑，人人自私，社会崩溃”</td></tr>
+<tr><td>类比反杀</td><td>用对方逻辑反击</td><td>“您说 A 像 B，那 B 的坏处 A 也有”</td></tr>
+<tr><td>范围切割</td><td>限定讨论范围</td><td>“这仅限于……，不能推广到……”</td></tr>
+<tr><td>利弊对冲</td><td>承认好处，指出代价</td><td>“确实有好处，但代价是……”</td></tr>
+<tr><td>因果倒置</td><td>反转因果关系</td><td>“不是 A 导致 B，是 B 导致 A”</td></tr>
+<tr><td>数据反杀</td><td>指出统计缺陷</td><td>“样本仅 100 人且未考虑地区差异”</td></tr>
+<tr><td>受身</td><td>先接住再反击（聪明人的反驳）</td><td>“您方说得对，但这恰恰说明……”</td></tr>
+</table>
+<h4>有效反驳三思路（颜如晶）</h4>
+<ul><li>做<b>批判者</b>，而非杠精：攻击论证，不攻击动机。</li>
+<li><b>归谬</b>是最尖锐的反驳方式。</li>
+<li>受身：承认对方前提的一部分，换取反击的支点。</li></ul>
+<h4>切割战场法（四辩常用）</h4>
+<ul><li>将对方观点分类为：事实错误 / 逻辑错误 / 价值偏差，集中火力攻击 1–2 个致命漏洞。</li></ul>`},
+{id:"ziyou", title:"五 · 自由辩与结辩", html:`
+<h3>五 · 自由辩与结辩</h3>
+<h4>自由辩：短、准、狠</h4>
+<ul>
+<li><b>短</b>：每次发言 15–30 秒，长篇大论=送时间。</li>
+<li><b>准</b>：每次只攻击一个点，用“我方已多次强调，对方仍回避 XX”强化印象。</li>
+<li><b>狠</b>：用类比、数据或极端案例直击逻辑硬伤。</li>
+<li><b>先答后问</b>：先回应对方上一棒，再抛出自己的问题。</li>
+<li><b>抓漏不放</b>：口误、矛盾、回避，指出来并反复强调。</li>
+</ul>
+<h4>结辩三段式</h4>
+<ol>
+<li><b>收拾战场</b>：梳理全场交锋点，说明每个交锋点我方占优。</li>
+<li><b>回应重创</b>：对我方被攻击最狠的点给出最后补救。</li>
+<li><b>价值升华</b>：跳出细节，把辩题升维到价值观层面收尾。</li>
+</ol>
+<p>时间分配：前 1/3 拆解对方 → 中 1/3 强化己方框架 → 后 1/3 升华价值。</p>
+<h4>结辩金句模板</h4>
+<div class="quote">“今天对方辩友告诉我们要……，但回避了一个根本问题：……。而我方始终认为，……。这才是这个辩题真正想让我们思考的。”</div>`},
+{id:"miuwu", title:"六 · 逻辑谬误清单", html:`
+<h3>六 · 逻辑谬误清单</h3>
+<p>反驳前先诊断：对方犯的是哪种病？对症下药才锋利。</p>
+<table>
+<tr><th>谬误</th><th>表现</th><th>对应反驳</th></tr>
+<tr><td>偷换概念</td><td>同一词前后含义不同</td><td>拆定义：要求统一语义</td></tr>
+<tr><td>虚假两难</td><td>把光谱砍成二选一</td><td>指出被隐藏的中间选项</td></tr>
+<tr><td>滑坡谬误</td><td>渐进风险推到极端终点</td><td>归谬 + 要求逐环举证</td></tr>
+<tr><td>以偏概全</td><td>孤例支撑全称结论</td><td>数据反杀：样本不典型</td></tr>
+<tr><td>因果倒置</td><td>A、B 相关即断因果</td><td>追问机制与时间顺序</td></tr>
+<tr><td>诉诸人身</td><td>攻击说话人而非论证</td><td>“评价资格来自标准，不来自履历”</td></tr>
+<tr><td>诉诸大众/权威</td><td>人多/名人即正确</td><td>从众≠正确，权威需给依据</td></tr>
+<tr><td>循环论证</td><td>结论藏进前提</td><td>要求独立于结论的证据</td></tr>
+<tr><td>错误归因</td><td>多因一果压缩为单因</td><td>拆论据：还原变量清单</td></tr>
+</table>
+<h4>三维拆骨公式</h4>
+<ol><li><b>要素解构</b>：剖析观点中的关键词（取代=？终将=多久？范围=？）</li>
+<li><b>逻辑链检验</b>：案例普适性？因果是否混淆？数据能否支撑推演？</li>
+<li><b>重建靶点</b>：把对方的论证重新组装成最脆弱的形状再攻击。</li></ol>`},
+{id:"yufa", title:"七 · 语言与风度", html:`
+<h3>七 · 语言与风度</h3>
+<h4>去废话公式</h4>
+<ul><li>原句：“我想说的是，从某种程度上来说，可能这个……”</li>
+<li>优化：“核心观点是……”。短句为主，每句一个观点，去掉“嗯、啊、那个”。</li></ul>
+<h4>质感三件套</h4>
+<ul>
+<li><b>深度</b>：引用研究、数据、理论。</li>
+<li><b>好懂</b>：用比喻、案例、故事。</li>
+<li><b>书面感</b>：不说“我觉得”，说“我方认为”。</li>
+</ul>
+<h4>逆风说服三技巧（刘京京）</h4>
+<ul><li>承认事实、重构框架：不否认对方案例，而是解释其为何不损己方框架。</li>
+<li>把“不近人情”的话说好听：先共情立场，再给出边界。</li>
+<li>价值对抗：把事实之争升维为两种价值的权衡，选对己方有利的价值坐标。</li></ul>
+<h4>临场纪律</h4>
+<ul><li>冷对热、慢制怒：对方激动时，放慢语调反而占优。</li>
+<li>团队配合：提前分工，避免四人同时站起或集体冷场。</li>
+<li>复盘：录音回听，标记逻辑漏洞与口误。</li></ul>
+<div class="quote">日常训练：限时复述（1 分钟复述一段论点）／即兴立论（随机辩题 3 分钟开口）／复盘录音。</div>`}
+];
+
+/* =====================================================
+   通用：页面导航 + 存储
+===================================================== */
+const $ = id => document.getElementById(id);
+const STORE_KEY = "lunfeng_v1";
+function loadStore(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }catch(e){ return {}; } }
+function saveStore(s){ localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
+let store = loadStore();
+store.forgeCount = store.forgeCount || 0;
+store.cross = store.cross || {hit:0, total:0};
+store.flash = store.flash || {right:0, total:0};
+
+function go(page){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  $(page).classList.add("active");
+  document.querySelectorAll("nav a").forEach(a=>a.classList.toggle("active", a.dataset.page===page));
+  window.scrollTo({top:0, behavior:"smooth"});
+  if(page==="home") renderHomeScores();
+}
+document.querySelectorAll("nav a").forEach(a=>{
+  a.addEventListener("click", e=>{ e.preventDefault(); go(a.dataset.page); });
+});
+function renderHomeScores(){
+  $("hs1").textContent = store.forgeCount;
+  $("hs2").textContent = store.cross.total ? Math.round(store.cross.hit/store.cross.total*100)+"%" : "0%";
+  $("hs3").textContent = store.flash.total ? Math.round(store.flash.right/store.flash.total*100)+"%" : "0%";
+}
+/* 每日金句：按日期轮换 */
+(function(){
+  const day = Math.floor(Date.now()/86400000);
+  $("goldenText").textContent = "「" + GOLDENS[day % GOLDENS.length].t + "」";
+})();
+renderHomeScores();
+
+/* pill 持方选择器（通用） */
+function pillSelect(navId, cb){
+  const nav = $(navId);
+  nav.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      nav.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      cb(b.dataset.s);
+    });
+  });
+  return ()=> nav.querySelector("button.on").dataset.s;
+}
+
+/* =====================================================
+   模块一：立论工坊
+===================================================== */
+let forge = {topicIdx:0, side:"pro", step:0, answers:["","","",""]};
+const FORGE_STEPS = [
+  {t:"第一步 · 定义", h:"界定辩题中的关键词。定义权就是战场选择权——想想对方会怎么曲解，先堵住。"},
+  {t:"第二步 · 判准", h:"给出比较标准。句式：「判断是否 XX，应看是否……」标准要双方可共通。"},
+  {t:"第三步 · 论点", h:"写下 2–3 个分论点，每个一句话说清，注意逻辑层次（社会/经济/伦理，或短期/长期）。"},
+  {t:"第四步 · 价值升华", h:"一句话收尾，把辩题抬到价值层面。这是评委记住你的地方。"}
+];
+function fillTopicSelects(){
+  const opts = TOPICS.map((t,i)=>`<option value="${i}">${t.title}</option>`).join("");
+  $("forgeTopic").innerHTML = opts;
+  $("crossTopic").innerHTML = opts;
+  $("arenaTopic").innerHTML = opts;
+}
+fillTopicSelects();
+const forgeGetSide = pillSelect("forgeSide", s=>{
+  forge.side = s; forgePreview();
+});
+$("forgeTopic").addEventListener("change", forgePreview);
+function forgePreview(){
+  const tp = TOPICS[$("forgeTopic").value];
+  const sd = tp[forgeGetSide ? forgeGetSide() : "pro"];
+  $("forgeSidePreview").innerHTML = `<b>持方立场：</b>${sd.def}`;
+}
+forgePreview();
+function forgeStart(){
+  forge.topicIdx = +$("forgeTopic").value;
+  forge.side = forgeGetSide();
+  forge.step = 0;
+  forge.answers = ["","","",""];
+  $("forgeSelect").style.display = "none";
+  $("forgeWork").style.display = "block";
+  $("forgeDone").style.display = "none";
+  forgeRender();
+}
+function forgeRender(){
+  const st = FORGE_STEPS[forge.step];
+  $("forgeStepTitle").textContent = st.t;
+  $("forgeStepHint").textContent = st.h;
+  $("forgeInput").value = forge.answers[forge.step];
+  for(let i=0;i<4;i++) $("fs"+(i+1)).className = i<=forge.step ? "done" : "";
+  $("forgePrev").disabled = forge.step===0;
+  $("forgeNext").textContent = forge.step===3 ? "生成完整立论" : "下一步";
+}
+function forgeNav(d){
+  forge.answers[forge.step] = $("forgeInput").value.trim();
+  const ns = forge.step + d;
+  if(ns<0 || ns>3) return;
+  if(ns===3 && forge.step===3){ return; }
+  forge.step = ns;
+  if(forge.step===0 && d>0){} 
+  if(forge.step>3) return;
+  if(forge.step===3){} 
+  if(ns===3 && d===1 && forge.step===3){ forgeRender(); return; }
+  forgeRender();
+  if(forge.step===3 && d===1){} 
+}
+/* 下一步按钮：第4步时生成完整立论 */
+(function(){
+  const btn = $("forgeNext");
+  btn.onclick = ()=>{
+    forge.answers[forge.step] = $("forgeInput").value.trim();
+    if(forge.step<3){ forge.step++; forgeRender(); }
+    else forgeShowResult();
+  };
+})();
+function forgeShowResult(){
+  const tp = TOPICS[forge.topicIdx], sd = tp[forge.side];
+  const labels = ["定义","判准","论点","升华"];
+  $("forgeSummary").innerHTML = FORGE_STEPS.map((s,i)=>
+    `<p style="margin-bottom:8px"><b>${labels[i]}</b>：${forge.answers[i]||"<i class='small'>（未填写）</i>"}</p>`).join("");
+  /* 自评清单 */
+  const items = [
+    "定义覆盖了辩题中的全部关键词，且预设了对方的曲解路线",
+    "判准是可共通的比较标准，而非单方面自说自话",
+    "论点为 2–3 个，彼此独立、互为犄角，无同义反复",
+    "每个论点能落到具体机制或证据，而非口号",
+    "结尾有价值升华，给评委留下记忆点",
+    "整体逻辑链完整：从定义能一路推到结论"
+  ];
+  $("forgeChecklist").innerHTML = items.map((it,i)=>
+    `<li><input type="checkbox" data-i="${i}" onchange="forgeCheck(this)">${it}</li>`).join("");
+  updateForgeSelf(0);
+  $("forgeRef").innerHTML = `
+    <p><b>定义</b>：${sd.def}</p>
+    <p><b>判准</b>：${sd.standard}</p>
+    ${sd.points.map((p,i)=>`<p><b>论点${i+1}</b>：${p.t}</p>`).join("")}
+    <div class="gold-card" style="margin-top:10px">${sd.golden}</div>`;
+  $("forgeWork").querySelector(".card#forgeCard").style.display="none";
+  $("forgeDone").style.display="block";
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function forgeCheck(cb){
+  cb.parentElement.classList.toggle("checked", cb.checked);
+  const total = document.querySelectorAll("#forgeChecklist input:checked").length;
+  updateForgeSelf(total);
+}
+function updateForgeSelf(n){
+  $("forgeSelfScore").innerHTML = `自评：已达成 <b style="color:var(--cinnabar)">${n} / 6</b> 项。${n>=5?"框架完整，可以上场了。":n>=3?"骨架已立，再补薄弱格。":"继续搭：定义与判准是地基。"}`;
+}
+function forgeFinish(){ store.forgeCount++; saveStore(store); alert("立论训练已记录！共完成 "+store.forgeCount+" 次。"); forgeReset(); }
+function forgeReset(){
+  $("forgeDone").style.display="none";
+  $("forgeWork").style.display="none";
+  $("forgeSelect").style.display="block";
+  $("forgeCard").style.display="block";
+  go("forge");
+  renderHomeScores();
+}
+
+/* =====================================================
+   模块二：质证对战
+===================================================== */
+const DIMS = [
+  {k:"def",  n:"拆定义",  hint:"质疑对方对核心概念的单方界定。例句：「请问您方所说的 XX，包不包含……这种情形？」"},
+  {k:"std",  n:"拆判准",  hint:"质疑对方比较利弊的标准。例句：「您方用‘时间先后’还是‘资源排序’来界定‘优先’？标准不同，结论可就变了。」"},
+  {k:"logic",n:"拆逻辑",  hint:"追问论证链条的缺口。例句：「从 A 推到 B，中间靠什么环节？这个环节您方论证了吗？」"},
+  {k:"evi",  n:"拆论据",  hint:"要求出示数据或指出证据缺陷。例句：「这个判断的数据来源是？样本多大？」"},
+  {k:"val",  n:"拆价值",  hint:"质疑对方的价值前提。例句：「您方默认 XX 比 YY 更重要，这个前提本身有争议吧？」"}
+];
+let cross = {topicIdx:0, side:"pro", round:0, hit:0, cur:null};
+const crossGetSide = pillSelect("crossSide", s=>{});
+function crossStart(){
+  cross.topicIdx = +$("crossTopic").value;
+  cross.side = crossGetSide();
+  cross.round = 0; cross.hit = 0;
+  $("crossSelect").style.display = "none";
+  $("crossPlay").style.display = "block";
+  crossRound();
+}
+function crossRound(){
+  const tp = TOPICS[cross.topicIdx];
+  const oppSide = cross.side==="pro" ? "con" : "pro";
+  const pt = tp[oppSide].points[cross.round];
+  cross.cur = pt;
+  cross.hitThis = 0;
+  $("crossRound").textContent = (cross.round+1)+"/"+tp[oppSide].points.length;
+  $("crossHit").textContent = cross.hit;
+  $("crossOppSpeech").innerHTML = `<div class="who">对方${oppSide==="pro"?"正方":"反方"}辩手</div>${pt.t}`;
+  $("crossFeedback").style.display = "none";
+  $("crossNextRow").style.display = "none";
+  $("crossWriteCard").style.display = "none";
+  $("crossAttackCard").style.display = "block";
+  $("crossOpts").innerHTML = DIMS.map((d,i)=>
+    `<button class="opt" data-k="${d.k}" onclick="crossPick(${i})"><b>${d.n}</b></button>`).join("");
+  window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+}
+function crossPick(i){
+  const d = DIMS[i], pt = cross.cur;
+  document.querySelectorAll("#crossOpts .opt").forEach(b=>{
+    b.disabled = true;
+    if(b.dataset.k===pt.weak) b.classList.add("correct");
+    else if(b===event.currentTarget) b.classList.add("wrong");
+  });
+  const hit = d.k===pt.weak;
+  store.cross.total++;
+  if(hit) store.cross.hit++;
+  saveStore(store);
+  $("crossDimHint").innerHTML = hit
+    ? `<span class="tag green">命中弱点</span> ${d.hint}`
+    : `<span class="tag red">此路不通</span> ${d.hint}`;
+  $("crossAttackCard").style.display="none";
+  $("crossWriteCard").style.display="block";
+  $("crossWriteCard").dataset.hit = hit ? "1":"0";
+  $("crossInput").value = "";
+}
+function crossAsk(){
+  const hit = $("crossWriteCard").dataset.hit==="1";
+  const q = $("crossInput").value.trim();
+  const who = cross.side==="pro"?"反方":"正方";
+  const resp = hit ? cross.cur.concede : cross.cur.defense;
+  store.cross.total += 0; /* 已计 */
+  $("crossWriteCard").style.display="none";
+  const fb = $("crossFeedback");
+  fb.style.display="block";
+  fb.innerHTML = `
+    <div class="feedback ${hit?"good":"bad"}">
+      <b>${hit?"✔ 质询有效":"✘ 攻击偏了"}</b> —— ${hit?"对方被迫让步，立刻收割战果。":"该维度恰是对方的稳固处，切换维度再攻。"}
+    </div>
+    <div class="speech" style="border-left-color:var(--gold)">
+      <div class="who">你的质询</div>${q||"<i class='small'>（口头质询，未记录）</i>"}
+    </div>
+    <div class="speech opponent">
+      <div class="who">对方${who}辩手</div>${resp}
+    </div>
+    <div class="card" style="background:#f8f5ec">
+      <h3 style="font-size:14px">🧠 解析</h3>
+      <p class="small">${cross.cur.analysis}</p>
+    </div>`;
+  $("crossNextRow").style.display="flex";
+  const tp = TOPICS[cross.topicIdx];
+  const oppSide = cross.side==="pro" ? "con" : "pro";
+  $("crossNextBtn").textContent = cross.round < tp[oppSide].points.length-1 ? "下一回合" : "查看战报";
+  window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+}
+function crossNext(){
+  const tp = TOPICS[cross.topicIdx];
+  const oppSide = cross.side==="pro" ? "con" : "pro";
+  if(cross.round < tp[oppSide].points.length-1){
+    cross.round++;
+    crossRound();
+  } else {
+    const pct = store.cross.total ? Math.round(store.cross.hit/store.cross.total*100) : 0;
+    $("crossPlay").innerHTML = `
+      <div class="card result-hero">
+        <div class="big">🎯</div>
+        <h3>质证战报</h3>
+        <p>本场命中 <b style="color:var(--cinnabar);font-size:22px">${cross.hit} / ${tp[oppSide].points.length}</b></p>
+        <p class="small">历史命中率 ${pct}%　·　质询五步：设陷阱 → 逼表态 → 抓矛盾 → 缩小包围 → 确认战果</p>
+        <div class="btn-row" style="max-width:340px;margin:16px auto 0">
+          <button class="accent" onclick="location.reload()">再战一场</button>
+          <button class="secondary" onclick="go('school')">去学堂复盘</button>
+        </div>
+      </div>`;
+  }
+}
+
+/* =====================================================
+   模块三：反驳快攻
+===================================================== */
+let flash = {idx:0, right:0, order:[]};
+function flashShuffle(){
+  flash.order = FLASH_POOL.map((_,i)=>i).sort(()=>Math.random()-0.5);
+}
+flashShuffle();
+function flashRound(){
+  const item = FLASH_POOL[flash.order[flash.idx]];
+  $("flashIdx").textContent = flash.idx+1;
+  $("flashRight").textContent = flash.right;
+  $("flashSpeech").innerHTML = `<div class="who">对方辩手</div>${item.s}`;
+  $("flashOpts").innerHTML = item.opts.map((o,i)=>
+    `<button class="opt" data-i="${i}" onclick="flashPick(${i})">${o}</button>`).join("");
+  $("flashWriteCard").style.display="none";
+  $("flashFeedback").style.display="none";
+  $("flashNextRow").style.display="none";
+}
+function flashPick(i){
+  const item = FLASH_POOL[flash.order[flash.idx]];
+  document.querySelectorAll("#flashOpts .opt").forEach(b=>{
+    b.disabled=true;
+    if(+b.dataset.i===item.c) b.classList.add("correct");
+    else if(+b.dataset.i===i) b.classList.add("wrong");
+  });
+  const ok = i===item.c;
+  store.flash.total++;
+  if(ok) store.flash.right++;
+  saveStore(store);
+  $("flashWriteCard").style.display="block";
+  $("flashWriteCard").dataset.ok = ok?"1":"0";
+}
+function flashSubmit(){
+  const item = FLASH_POOL[flash.order[flash.idx]];
+  const ok = $("flashWriteCard").dataset.ok==="1";
+  const my = $("flashInput").value.trim();
+  $("flashWriteCard").style.display="none";
+  const fb = $("flashFeedback");
+  fb.style.display="block";
+  fb.innerHTML = `
+    <div class="feedback ${ok?"good":"bad"}"><b>${ok?"✔ 手段选对了":"✘ 手段偏了"}</b>　<span class="small">${item.why}</span></div>
+    ${my?`<div class="speech" style="border-left-color:var(--gold)"><div class="who">你的反驳</div>${my}</div>`:""}
+    <div class="card" style="background:#f8f5ec">
+      <h3 style="font-size:14px">🗡️ 参考反驳</h3>
+      <p style="font-size:14px;margin-top:6px">${item.ref}</p>
+    </div>`;
+  $("flashNextRow").style.display="flex";
+}
+function flashNext(){
+  flash.idx++;
+  if(flash.idx < FLASH_POOL.length){
+    flashRound();
+  } else {
+    const pct = store.flash.total ? Math.round(store.flash.right/store.flash.total*100):0;
+    $("flashPlay").innerHTML = `
+      <div class="card result-hero">
+        <div class="big">⚡</div>
+        <h3>快攻战报</h3>
+        <p>本轮正确 <b style="color:var(--cinnabar);font-size:22px">${flash.right} / ${FLASH_POOL.length}</b></p>
+        <p class="small">历史正确率 ${pct}%　·　有效反驳三思路：做批判者而非杠精、归谬致胜、受身反击</p>
+        <div class="btn-row" style="max-width:340px;margin:16px auto 0">
+          <button class="accent" onclick="flashRestart()">换序再练</button>
+          <button class="secondary" onclick="go('school')">去学堂复盘</button>
+        </div>
+      </div>`;
+  }
+}
+function flashRestart(){ flash.idx=0; flash.right=0; flashShuffle(); flashRound(); }
+flashRound();
+
+/* =====================================================
+   模块四：模拟赛场
+===================================================== */
+const ARENA_PHASES = [
+  {n:"正方立论", dur:180, side:"pro", title:"环节一 · 正方立论（3 分钟）",
+   body:`<p><b>任务</b>：按「定义 → 判准 → 论点 → 升华」完整立论。</p>
+   <p class="small">开口前默念：定义堵曲解、判准可共通、论点一句话说清、结尾留记忆点。</p>`,
+   check:["开头亮明立场与定义","判准说出口","论点不超过 3 个且各有一句结论","结尾有升华句"]},
+  {n:"反方立论", dur:180, side:"con", title:"环节二 · 反方立论（3 分钟）",
+   body:`<p><b>任务</b>：搭建反方框架，同时留意正方立论中可攻击的漏洞。</p>
+   <p class="small">反方立论第一句可以先「回应定义」：指出对方定义偏向，再立己方框架。</p>`,
+   check:["对正方定义表态（接受或指出偏向）","己方判准明确","论点与判准挂钩","结尾升华"]},
+  {n:"正方质询", dur:120, side:"pro", title:"环节三 · 正方质询反方（2 分钟）",
+   body:`<p><b>任务</b>：用质询五步——设陷阱、逼表态、抓矛盾、缩小包围、确认战果。</p>
+   <p class="small">多用封闭式问题（是不是／二选一），对方让步立刻收割：「可见对方也承认……」</p>`,
+   check:["至少一次逼出明确表态","抓住一个矛盾或让步并当众确认","没有问开放式「为什么」浪费时间"]},
+  {n:"反方质询", dur:120, side:"con", title:"环节四 · 反方质询正方（2 分钟）",
+   body:`<p><b>任务</b>：同样五步法，重点攻击正方定义与判准——那是它的地基。</p>`,
+   check:["攻击了定义或判准至少一次","逼出明确表态","确认战果"]},
+  {n:"自由辩论", dur:240, side:"both", title:"环节五 · 自由辩论（4 分钟，双方交替）",
+   body:`<p><b>任务</b>：短、准、狠。15–30 秒一轮，先答后问，抓漏不放。</p>
+   <p class="small">对着计时器自说自话也行：正方 30 秒 → 切换视角反方 30 秒，左右互搏最能练反应。</p>`,
+   check:["每轮发言不超 30 秒","先回应再抛问","始终咬住核心分歧，不纠缠细枝末节"]},
+  {n:"反方结辩", dur:180, side:"con", title:"环节六 · 反方结辩（3 分钟）",
+   body:`<p><b>任务</b>：结辩三段式——收拾战场、回应重创、价值升华。</p>
+   <p class="small">前 1/3 拆对方，中 1/3 补己方，后 1/3 升华。金句模板见学堂。</p>`,
+   check:["梳理了全场主要交锋点","对被重创的点做了最后补救","价值升华收尾"]},
+  {n:"正方结辩", dur:180, side:"pro", title:"环节七 · 正方结辩（3 分钟）",
+   body:`<p><b>任务</b>：同三段式。最后一名发言者拥有定义整场比赛记忆的权利。</p>`,
+   check:["梳理交锋点","回应重创","升华收尾，留下金句"]}
+];
+let arena = {phase:0, remain:0, timer:null, side:"pro"};
+const arenaGetSide = pillSelect("arenaSide", s=>{ arenaPreview(); });
+$("arenaTopic").addEventListener("change", arenaPreview);
+function arenaPreview(){
+  const tp = TOPICS[$("arenaTopic").value];
+  const sd = arenaGetSide();
+  const sideData = tp[sd];
+  $("arenaPreview").innerHTML = `<b>你的持方：</b>${sd==="pro"?"正方":"反方"}<br>
+  <b>定义参考</b>：${sideData.def}<br><b>判准参考</b>：${sideData.standard}`;
+}
+arenaPreview();
+function arenaStart(){
+  arena.phase = 0;
+  $("arenaSelect").style.display="none";
+  $("arenaPlay").style.display="block";
+  arenaLoadPhase();
+}
+function arenaLoadPhase(){
+  const ph = ARENA_PHASES[arena.phase];
+  arena.remain = ph.dur;
+  renderTimer();
+  document.querySelectorAll("#arenaPhases .phase").forEach((el,i)=>{
+    el.classList.toggle("now", i===arena.phase);
+    el.querySelector(".no").classList.toggle("now", i===arena.phase);
+  });
+  $("arenaGuideTitle").textContent = ph.title;
+  $("arenaGuideBody").innerHTML = ph.body;
+  $("arenaChecklist").innerHTML = ph.check.map(c=>`<li><input type="checkbox" onchange="this.parentElement.classList.toggle('checked',this.checked)">${c}</li>`).join("");
+  $("arenaToggle").textContent = "开始";
+  clearInterval(arena.timer); arena.timer=null;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function renderTimer(){
+  const m = String(Math.floor(arena.remain/60)).padStart(2,"0");
+  const s = String(arena.remain%60).padStart(2,"0");
+  const el = $("arenaTimer");
+  el.textContent = m+":"+s;
+  el.classList.toggle("danger", arena.remain<=30);
+}
+function arenaToggle(){
+  if(arena.timer){
+    clearInterval(arena.timer); arena.timer=null;
+    $("arenaToggle").textContent="继续";
+    return;
+  }
+  $("arenaToggle").textContent="暂停";
+  arena.timer = setInterval(()=>{
+    arena.remain--;
+    renderTimer();
+    if(arena.remain<=0){
+      clearInterval(arena.timer); arena.timer=null;
+      $("arenaToggle").textContent="时间到 → 进入下一环节";
+      if(arena.phase < ARENA_PHASES.length-1){
+        arena.phase++; arenaLoadPhase();
+      }
+    }
+  }, 1000);
+}
+function arenaReset(){
+  arenaLoadPhase();
+}
+(function buildArenaPhases(){
+  $("arenaPhases").innerHTML = ARENA_PHASES.map((p,i)=>`
+    <div class="phase"><div class="no">${i+1}</div>
+    <div class="info"><b>${p.n}</b><span>${Math.floor(p.dur/60)} 分钟 · ${p.side==="both"?"双方交替":(p.side==="pro"?"正方":"反方")}</span></div>
+    <button class="ghost" style="padding:6px 10px;font-size:12px" onclick="arena.phase=${i};arenaLoadPhase()">跳转</button></div>`).join("");
+})();
+
+/* =====================================================
+   辩论学堂
+===================================================== */
+(function buildSchool(){
+  $("schoolToc").innerHTML = LESSONS.map((l,i)=>`<button data-t="${l.id}" onclick="schoolGo('${l.id}')">${l.title}</button>`).join("");
+  $("schoolBody").innerHTML = LESSONS.map(l=>`<div class="card lesson" id="ls-${l.id}">${l.html}</div>`).join("");
+  schoolGo(LESSONS[0].id);
+})();
+function schoolGo(id){
+  document.querySelectorAll(".lesson").forEach(l=>l.classList.remove("active"));
+  $("ls-"+id).classList.add("active");
+  document.querySelectorAll("#schoolToc button").forEach(b=>b.classList.toggle("on", b.dataset.t===id));
+  $("schoolSearch").value="";
+}
+function schoolFilter(){
+  const q = $("schoolSearch").value.trim();
+  if(!q){ return; }
+  let first = null;
+  document.querySelectorAll(".lesson").forEach(l=>{
+    const hit = l.textContent.includes(q);
+    l.classList.toggle("active", hit && !!q);
+    l.style.outline = hit ? "2px solid var(--gold)" : "";
+    if(hit && !first) first = l.id;
+  });
+  if(first) document.getElementById(first).scrollIntoView({behavior:"smooth"});
+}
+$("schoolSearch").addEventListener("change", e=>{ if(!e.target.value.trim()){ document.querySelectorAll(".lesson").forEach(l=>{l.style.outline="";}); schoolGo(LESSONS[0].id);} });
+
+/* =====================================================
+   模块五：对辩 AI（真模型自由应答）
+===================================================== */
+const AI_PRESETS = [
+  {name:"DeepSeek（推荐，便宜好用）", base:"https://api.deepseek.com/v1", model:"deepseek-chat"},
+  {name:"智谱 GLM（glm-4-flash 免费）", base:"https://open.bigmodel.cn/api/paas/v4", model:"glm-4-flash"},
+  {name:"硅基流动", base:"https://api.siliconflow.cn/v1", model:"Qwen/Qwen2.5-72B-Instruct"},
+  {name:"Kimi 月之暗面", base:"https://api.moonshot.cn/v1", model:"moonshot-v1-8k"},
+  {name:"OpenAI", base:"https://api.openai.com/v1", model:"gpt-4o-mini"},
+  {name:"自定义（OpenAI 兼容）", base:"", model:""}
+];
+let aiCfg = store.aiCfg || {};
+let aiState = {msgs:[], running:false};
+const aiGetSide = pillSelect("aiSide", s=>{});
+const aiGetMode = pillSelect("aiMode", s=>{});
+(function aiInit(){
+  $("aiPreset").innerHTML = AI_PRESETS.map((p,i)=>`<option value="${i}">${p.name}</option>`).join("");
+  $("aiTopic").innerHTML = TOPICS.map((t,i)=>`<option value="${i}">${t.title}</option>`).join("")
+    + `<option value="-1">✏️ 自定义辩题</option>`;
+  $("aiPreset").addEventListener("change", aiFillPreset);
+  aiFillPreset(); aiLoadCfg();
+})();
+function aiFillPreset(){
+  const p = AI_PRESETS[$("aiPreset").value];
+  if(p.base){ $("aiBase").value = p.base; $("aiModel").value = p.model; }
+}
+function aiLoadCfg(){
+  $("aiBase").value = aiCfg.base || AI_PRESETS[0].base;
+  $("aiModel").value = aiCfg.model || AI_PRESETS[0].model;
+  $("aiKey").value = aiCfg.key || "";
+  $("aiPreset").value = aiCfg.presetIdx != null ? aiCfg.presetIdx : 0;
+}
+function aiSaveCfg(){
+  aiCfg = {presetIdx:+$("aiPreset").value, base:$("aiBase").value.trim(), model:$("aiModel").value.trim(), key:$("aiKey").value.trim()};
+  store.aiCfg = aiCfg; saveStore(store);
+  $("aiCfgStatus").textContent = "✔ 已保存到本机";
+  setTimeout(()=>{ $("aiCfgStatus").textContent=""; }, 3000);
+}
+function aiTopicText(){
+  const v = +$("aiTopic").value;
+  if(v===-1) return $("aiCustomTopic").value.trim() || "自定义辩题（未填写）";
+  return TOPICS[v].title;
+}
+const AI_METHOD = `【辩论方法论】
+· 立论四件套：定义（定义权=战场选择权）→判准（比较标准要可共通）→论点（2-3个，一句话说清）→价值升华。
+· 质询五步：设陷阱→逼表态→抓矛盾→缩小包围→确认战果；多用封闭式提问（是不是/二选一），少问“为什么”。
+· 反驳五拆：拆定义→拆标准→拆逻辑→拆论据→拆价值；手段库：归谬、类比反杀、范围切割、利弊对冲、因果倒置、数据反杀、受身。
+· 自由辩：短准狠，先答后问，抓漏不放。
+· 结辩三段式：收拾战场→回应重创→价值升华。`;
+
+function aiSysPrompt(){
+  const mode = aiGetMode();
+  const mySide = aiGetSide();
+  const oppSide = mySide==="pro" ? "反方" : "正方";
+  const topic = aiTopicText();
+  const sideDesc = `辩题：「${topic}」。你持${oppSide}立场，用户持${mySide==="pro"?"正方":"反方"}立场。`;
+  if(mode==="zhixunMe"){
+    return `你是「论锋」辩论训练场的AI辩手，任务是质询用户。${sideDesc}
+${AI_METHOD}
+【质询规则】每轮只问一个问题，必须是封闭式问题（是不是/对不对/二选一），不许长篇陈述。执行质询五步：连环追问、抓矛盾、缩小包围、逼表态。用户回避时，指出其回避并要求正面回答。每轮控制在80字以内。`;
+  }
+  if(mode==="zhixunAi"){
+    return `你是「论锋」辩论训练场的AI辩手，正在接受用户质询。${sideDesc}
+${AI_METHOD}
+【应答规则】只回答用户的提问。防守纪律：答简不答繁，“是/不是+一句话”；对陷阱问题保持警觉，可加限定词回应而不整体让步；仅在被逼到逻辑死角时作有限让步并承认战果。每轮不超过60字。`;
+  }
+  if(mode==="judge"){
+    return `你是资深辩论评委，点评严谨、直接、有建设性。`;
+  }
+  return `你是「论锋」辩论训练场的AI辩手，与用户进行真实对抗赛。${sideDesc}你实力强悍、不留情面，绝不放弃持方立场。
+${AI_METHOD}
+【发言规则】每次发言不超过150字，短句为主；先回应对方上一轮（指出其逻辑漏洞、让步或回避，运用反驳五拆），再推进己方论点；禁止客套寒暄与重复立场宣言；自由辩节奏，先答后问。`;
+}
+function aiEsc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function aiRender(){
+  const box = $("aiChat");
+  box.innerHTML = aiState.msgs.map(m=>{
+    if(m.role==="system") return "";
+    const who = m.role==="user" ? "你" : "AI";
+    const cls = m.role==="user" ? "" : "opponent";
+    return `<div class="speech ${cls}" style="border-left-color:${m.role==='user'?'var(--green)':'var(--ink)'}">
+      <div class="who">${who}</div>${aiEsc(m.content).replace(/\n/g,"<br>")}</div>`;
+  }).join("");
+  box.scrollTop = box.scrollHeight;
+}
+function aiOpen(){
+  const mode = aiGetMode();
+  if(!aiCfg.key){ $("aiCfgStatus").textContent = "⚠ 请先填写并保存 API Key"; return; }
+  if(mode==="judge"){
+    aiJudge(); return;
+  }
+  aiState.msgs = [{role:"system", content:aiSysPrompt()}];
+  $("aiChatCard").style.display="block";
+  if(mode==="zhixunAi") aiCall("我方开始质询，请听题。");
+  else if(mode==="zhixunMe") aiCall("请开始质询，抛出你的第一问。");
+  else aiCall("请按立论四件套做开场立论（150字内），立论后抛出你的第一个攻击问题。");
+}
+async function aiCall(extra){
+  if(aiState.running) return;
+  if(!aiCfg.key){ $("aiStatus").textContent = "⚠ 请先配置并保存 API Key"; return; }
+  if(extra){ aiState.msgs.push({role:"user", content:extra}); aiRender(); }
+  aiState.running = true;
+  $("aiSendBtn").disabled = true;
+  $("aiStatus").textContent = "AI 正在思考……";
+  try{
+    const res = await fetch(aiCfg.base.replace(/\/+$/,"")+"/chat/completions", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+aiCfg.key},
+      body:JSON.stringify({model:aiCfg.model, messages:aiState.msgs, temperature:0.8, max_tokens:600})
+    });
+    if(!res.ok) throw new Error("HTTP "+res.status+"："+(await res.text()).slice(0,180));
+    const data = await res.json();
+    const reply = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if(!reply) throw new Error("返回为空："+JSON.stringify(data).slice(0,180));
+    aiState.msgs.push({role:"assistant", content:reply});
+    aiRender();
+    $("aiStatus").textContent = "";
+  }catch(e){
+    let msg = "❌ 调用失败："+e.message;
+    if(/Failed to fetch|NetworkError|Load failed/i.test(e.message||"")) msg += "\n提示：该 API 可能不允许浏览器直接调用（CORS 限制），换一个服务商预设试试。";
+    $("aiStatus").textContent = msg;
+  }finally{
+    aiState.running = false;
+    $("aiSendBtn").disabled = false;
+  }
+}
+function aiSend(){
+  const v = $("aiInput").value.trim();
+  if(!v) return;
+  $("aiInput").value = "";
+  aiCall(v);
+}
+function aiJudge(){
+  const transcript = aiState.msgs.filter(m=>m.role!=="system").map(m=>(m.role==="user"?"【用户】":"【AI辩手】")+m.content).join("\n");
+  if(!transcript.trim()){ $("aiStatus").textContent = "本场还没有对话内容，先打几个回合再来复盘。"; return; }
+  aiState.msgs = [{role:"system", content:aiSysPrompt()}, {role:"user", content:
+`以下是本场训练的对话记录，请以评委身份复盘。
+
+${transcript}
+
+【点评框架】
+① 立论：定义/判准/论点是否扎实（0-10分）
+② 质询与防守：是否逼出表态、收割战果；答简不答繁（0-10分）
+③ 反驳：是否命中逻辑、手段是否锋利（0-10分）
+④ 语言：短句是否有力、有没有废话（0-10分）
+每项给分并附具体的改进建议（引用原话），最后给总评与下一步训练建议。`}];
+  $("aiChatCard").style.display = "block";
+  aiRender();
+  aiCall("");
+}
+function aiClear(){
+  aiState.msgs = [];
+  aiRender();
+  $("aiStatus").textContent = "";
+  $("aiChatCard").style.display = "none";
+}
+</script>
+</body>
+</html>
