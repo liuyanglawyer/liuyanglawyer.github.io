@@ -167,6 +167,28 @@ textarea:focus,input:focus,select:focus{border-color:var(--ink)}
 .result-hero{text-align:center;padding:18px 0}
 .result-hero .big{font-size:40px}
 .result-hero h3{font-family:"Songti SC",serif;font-size:20px;margin:6px 0}
+/* ===== 对线场 & 限时 ===== */
+.hp-wrap{display:flex;align-items:center;gap:8px;margin-bottom:8px;position:relative}
+.hp-name{font-size:12px;width:58px;font-weight:600;flex-shrink:0}
+.hp-bar{flex:1;height:13px;background:#eee6d8;border-radius:8px;overflow:hidden}
+.hp-fill{height:100%;border-radius:8px;transition:width .5s ease}
+.hp-fill.me{background:linear-gradient(90deg,#2e7d5b,#5aa97e)}
+.hp-fill.foe{background:linear-gradient(90deg,#b03a2e,#d96a55)}
+.hp-fill.low{background:linear-gradient(90deg,#8f9aa8,#b6c0cd)}
+.hp-num{font-size:12px;width:36px;text-align:right;font-family:Menlo,monospace;flex-shrink:0}
+.dmg{position:absolute;right:44px;top:-8px;font-family:"Songti SC",serif;font-weight:700;font-size:22px;pointer-events:none;animation:floatUp 1s ease forwards;z-index:5}
+.dmg.me{color:var(--cinnabar)} .dmg.foe{color:var(--green)}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.shake{animation:shake .4s ease}
+.timebar{height:6px;background:#eee6d8;border-radius:3px;overflow:hidden;margin:6px 0 4px}
+.timebar i{display:block;height:100%;width:100%;background:var(--green);border-radius:3px}
+.timebar i.danger{background:var(--cinnabar)}
+.time-lbl{text-align:center;font-size:12px;color:var(--muted);font-family:Menlo,monospace}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chips button{font-size:12px;padding:6px 10px;border-radius:16px;background:#f2efe6;border:1px solid var(--line);color:var(--ink);font-family:inherit;cursor:pointer}
+.streak-badge{display:inline-block;background:#fdeeea;color:var(--cinnabar);border:1px solid #f3cfc8;border-radius:14px;font-size:12px;padding:1px 9px;margin-left:6px}
+.rank-big{font-family:"Songti SC",serif;font-size:52px;color:var(--cinnabar);line-height:1.2}
 </style>
 </head>
 <body>
@@ -183,17 +205,19 @@ textarea:focus,input:focus,select:focus{border-color:var(--ink)}
     <h3>📜 缘起</h3>
     <p class="small">本训练场以《辩论筑基·辩论入门标准化教程》为骨架，融合游梓翔《认识辩论》、《深度说服》（黄执中·颜如晶·胡渐彪）、《学会提问》、《简单的逻辑学》等权威书目，提炼成一套可反复操练的闯关游戏。</p>
     <div class="divider"></div>
-    <p class="small">五重训练：<span class="hl">立论工坊</span>搭框架 → <span class="hl">质证对战</span>练盘问 → <span class="hl">反驳快攻</span>拆谬误 → <span class="hl">模拟赛场</span>走全流程 → <span class="hl">对辩 AI</span>真模型自由交锋。</p>
+    <p class="small">六重训练：<span class="hl">立论工坊</span>搭框架 → <span class="hl">质证对战</span>练盘问 → <span class="hl">反驳快攻</span>拆谬误 → <span class="hl">对线场</span>血条交锋 → <span class="hl">模拟赛场</span>走全流程 → <span class="hl">对辩 AI</span>真模型自由交锋。</p>
   </div>
   <div class="scorebar" id="homeScores">
     <div class="s"><b id="hs1">0</b><span>立论完成</span></div>
     <div class="s"><b id="hs2">0%</b><span>质询命中率</span></div>
     <div class="s"><b id="hs3">0%</b><span>反驳正确率</span></div>
+    <div class="s"><b id="hs4">0</b><span>对线胜场</span></div>
   </div>
   <div class="card">
     <h3>⚔️ 选择训练</h3>
     <div class="btn-row">
-      <button class="accent" onclick="go('forge')">🏰 立论工坊</button>
+      <button class="accent" onclick="go('duel')">⚔️ 对线场（推荐）</button>
+      <button onclick="go('forge')">🏰 立论工坊</button>
       <button onclick="go('cross')">🎯 质证对战</button>
       <button onclick="go('flash')">⚡ 反驳快攻</button>
       <button onclick="go('arena')">🏟️ 模拟赛场</button>
@@ -291,8 +315,11 @@ textarea:focus,input:focus,select:focus{border-color:var(--ink)}
     <div class="scorebar">
       <div class="s"><b id="crossRound">1/2</b><span>回合</span></div>
       <div class="s"><b id="crossHit">0</b><span>命中</span></div>
+      <div class="s"><b id="crossStreak">0</b><span>连击</span></div>
     </div>
     <div class="card">
+      <div class="timebar"><i id="crossTimeFill"></i></div>
+      <div class="time-lbl" id="crossTimeLbl"></div>
       <div class="speech opponent" id="crossOppSpeech"></div>
     </div>
     <div class="card" id="crossAttackCard">
@@ -321,8 +348,11 @@ textarea:focus,input:focus,select:focus{border-color:var(--ink)}
     <div class="scorebar">
       <div class="s"><b id="flashIdx">1</b><span>题号</span></div>
       <div class="s"><b id="flashRight">0</b><span>正确</span></div>
+      <div class="s"><b id="flashStreak">0</b><span>连击</span></div>
     </div>
     <div class="card">
+      <div class="timebar"><i id="flashTimeFill"></i></div>
+      <div class="time-lbl" id="flashTimeLbl"></div>
       <div class="speech opponent" id="flashSpeech"></div>
     </div>
     <div class="card">
@@ -418,6 +448,35 @@ textarea:focus,input:focus,select:focus{border-color:var(--ink)}
   </div>
 </section>
 
+<!-- ================= 对线场 ================= -->
+<section id="duel">
+  <h2 class="page-title">⚔️ 对线场</h2>
+  <p class="page-desc">本地辩手 AI 连环出招，<b>你自由打字还击</b>。引擎识别你的刀法——拆定义、拆判准、拆逻辑、要数据、举反例、归谬、让步收割——命中越多越准，对方掉血越多；同一种刀法重复用，伤害递减，逼你换招。超时会挨打。</p>
+  <div id="duelSelect">
+    <div class="card"><h3>① 选择辩题</h3><select id="duelTopic"></select></div>
+    <div class="card"><h3>② 选择你的持方（对方持相反立场）</h3>
+      <div class="pill-nav" id="duelSide"><button data-s="pro" class="on">我打正方</button><button data-s="con">我打反方</button></div>
+    </div>
+    <div class="btn-row"><button class="accent" onclick="duelStart()">开局对线</button></div>
+  </div>
+  <div id="duelPlay" style="display:none">
+    <div class="card" id="duelHpCard">
+      <div class="hp-wrap" id="foeHpWrap"><div class="hp-name">对方辩手</div><div class="hp-bar"><div class="hp-fill foe" id="foeHp" style="width:100%"></div></div><div class="hp-num" id="foeHpNum">100</div></div>
+      <div class="hp-wrap" id="meHpWrap"><div class="hp-name">你</div><div class="hp-bar"><div class="hp-fill me" id="meHp" style="width:100%"></div></div><div class="hp-num" id="meHpNum">100</div></div>
+      <div class="small" id="duelRoundLbl" style="text-align:center">第 1 回合</div>
+    </div>
+    <div id="duelLog"></div>
+    <div class="card" id="duelInputCard" style="display:none">
+      <div class="timebar"><i id="duelTimeFill"></i></div>
+      <div class="time-lbl" id="duelTimeLbl"></div>
+      <div class="chips" id="duelChips"></div>
+      <textarea id="duelInput" rows="3" placeholder="自由还击：点名对方概念、拆它的逻辑链、要数据、举反例、归谬……越准越疼"></textarea>
+      <div class="btn-row"><button class="accent" onclick="duelStrike()">出招</button></div>
+    </div>
+    <div class="btn-row" id="duelNextRow" style="display:none"><button class="accent" id="duelNextBtn" onclick="duelNext()">继续</button></div>
+  </div>
+</section>
+
 <!-- ================= 辩论学堂 ================= -->
 <section id="school">
   <h2 class="page-title">📖 辩论学堂</h2>
@@ -443,6 +502,7 @@ textarea:focus,input:focus,select:focus{border-color:var(--ink)}
   <a href="#" data-page="forge"><span class="ic">🏰</span>立论</a>
   <a href="#" data-page="cross"><span class="ic">🎯</span>质证</a>
   <a href="#" data-page="flash"><span class="ic">⚡</span>反驳</a>
+  <a href="#" data-page="duel"><span class="ic">⚔️</span>对线</a>
   <a href="#" data-page="arena"><span class="ic">🏟️</span>赛场</a>
   <a href="#" data-page="ai"><span class="ic">🤖</span>对辩</a>
   <a href="#" data-page="school"><span class="ic">📖</span>学堂</a>
@@ -992,6 +1052,7 @@ let store = loadStore();
 store.forgeCount = store.forgeCount || 0;
 store.cross = store.cross || {hit:0, total:0};
 store.flash = store.flash || {right:0, total:0};
+store.duel = store.duel || {win:0, total:0};
 
 function go(page){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -1007,6 +1068,7 @@ function renderHomeScores(){
   $("hs1").textContent = store.forgeCount;
   $("hs2").textContent = store.cross.total ? Math.round(store.cross.hit/store.cross.total*100)+"%" : "0%";
   $("hs3").textContent = store.flash.total ? Math.round(store.flash.right/store.flash.total*100)+"%" : "0%";
+  $("hs4").textContent = store.duel.win;
 }
 /* 每日金句：按日期轮换 */
 (function(){
@@ -1043,6 +1105,7 @@ function fillTopicSelects(){
   $("forgeTopic").innerHTML = opts;
   $("crossTopic").innerHTML = opts;
   $("arenaTopic").innerHTML = opts;
+  $("duelTopic").innerHTML = opts;
 }
 fillTopicSelects();
 const forgeGetSide = pillSelect("forgeSide", s=>{
@@ -1150,12 +1213,34 @@ const DIMS = [
   {k:"evi",  n:"拆论据",  hint:"要求出示数据或指出证据缺陷。例句：「这个判断的数据来源是？样本多大？」"},
   {k:"val",  n:"拆价值",  hint:"质疑对方的价值前提。例句：「您方默认 XX 比 YY 更重要，这个前提本身有争议吧？」"}
 ];
-let cross = {topicIdx:0, side:"pro", round:0, hit:0, cur:null};
+let cross = {topicIdx:0, side:"pro", round:0, hit:0, streak:0, best:0, cur:null, timer:null, remain:0};
+const CROSS_TIME = 40;
 const crossGetSide = pillSelect("crossSide", s=>{});
+function crossTimerStart(){
+  clearInterval(cross.timer);
+  cross.remain = CROSS_TIME;
+  crossTimerRender();
+  cross.timer = setInterval(()=>{
+    cross.remain--;
+    crossTimerRender();
+    if(cross.remain<=0){ clearInterval(cross.timer); cross.timer=null; crossTimeout(); }
+  },1000);
+}
+function crossTimerRender(){
+  const f = $("crossTimeFill");
+  f.style.width = (cross.remain/CROSS_TIME*100)+"%";
+  f.classList.toggle("danger", cross.remain<=10);
+  $("crossTimeLbl").textContent = `⏱ ${cross.remain}s 内完成「选维度 + 写质询」——法庭盘问不等人`;
+}
+function crossTimeout(){
+  if(!$("crossPlay").offsetParent) return;
+  cross.streak = 0;
+  crossAsk(true);
+}
 function crossStart(){
   cross.topicIdx = +$("crossTopic").value;
   cross.side = crossGetSide();
-  cross.round = 0; cross.hit = 0;
+  cross.round = 0; cross.hit = 0; cross.streak = 0; cross.best = 0;
   $("crossSelect").style.display = "none";
   $("crossPlay").style.display = "block";
   crossRound();
@@ -1168,6 +1253,7 @@ function crossRound(){
   cross.hitThis = 0;
   $("crossRound").textContent = (cross.round+1)+"/"+tp[oppSide].points.length;
   $("crossHit").textContent = cross.hit;
+  $("crossStreak").textContent = cross.streak;
   $("crossOppSpeech").innerHTML = `<div class="who">对方${oppSide==="pro"?"正方":"反方"}辩手</div>${pt.t}`;
   $("crossFeedback").style.display = "none";
   $("crossNextRow").style.display = "none";
@@ -1175,6 +1261,7 @@ function crossRound(){
   $("crossAttackCard").style.display = "block";
   $("crossOpts").innerHTML = DIMS.map((d,i)=>
     `<button class="opt" data-k="${d.k}" onclick="crossPick(${i})"><b>${d.n}</b></button>`).join("");
+  crossTimerStart();
   window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
 }
 function crossPick(i){
@@ -1196,21 +1283,30 @@ function crossPick(i){
   $("crossWriteCard").dataset.hit = hit ? "1":"0";
   $("crossInput").value = "";
 }
-function crossAsk(){
-  const hit = $("crossWriteCard").dataset.hit==="1";
-  const q = $("crossInput").value.trim();
+function crossAsk(timeout){
+  if(cross.timer){ clearInterval(cross.timer); cross.timer=null; }
+  const hit = !timeout && $("crossWriteCard").dataset.hit==="1";
+  const q = timeout ? "" : $("crossInput").value.trim();
   const who = cross.side==="pro"?"反方":"正方";
   const resp = hit ? cross.cur.concede : cross.cur.defense;
-  store.cross.total += 0; /* 已计 */
+  if(hit){
+    cross.hit++; cross.streak++;
+    cross.best = Math.max(cross.best, cross.streak);
+  } else {
+    cross.streak = 0;
+  }
+  $("crossHit").textContent = cross.hit;
+  $("crossStreak").textContent = cross.streak;
   $("crossWriteCard").style.display="none";
   const fb = $("crossFeedback");
   fb.style.display="block";
+  const streakHtml = cross.streak>=2 ? ` <span class="streak-badge">🔥 ${cross.streak} 连击</span>` : "";
   fb.innerHTML = `
     <div class="feedback ${hit?"good":"bad"}">
-      <b>${hit?"✔ 质询有效":"✘ 攻击偏了"}</b> —— ${hit?"对方被迫让步，立刻收割战果。":"该维度恰是对方的稳固处，切换维度再攻。"}
+      <b>${timeout?"⏰ 超时":hit?"✔ 质询有效":"✘ 攻击偏了"}</b> —— ${timeout?"盘问窗口关闭，对方从容而过。":hit?"对方被迫让步，立刻收割战果。":"该维度恰是对方的稳固处，切换维度再攻。"}${streakHtml}
     </div>
     <div class="speech" style="border-left-color:var(--gold)">
-      <div class="who">你的质询</div>${q||"<i class='small'>（口头质询，未记录）</i>"}
+      <div class="who">你的质询</div>${q||"<i class='small'>（超时，未记录质询）</i>"}
     </div>
     <div class="speech opponent">
       <div class="who">对方${who}辩手</div>${resp}
@@ -1237,7 +1333,7 @@ function crossNext(){
       <div class="card result-hero">
         <div class="big">🎯</div>
         <h3>质证战报</h3>
-        <p>本场命中 <b style="color:var(--cinnabar);font-size:22px">${cross.hit} / ${tp[oppSide].points.length}</b></p>
+        <p>本场命中 <b style="color:var(--cinnabar);font-size:22px">${cross.hit} / ${tp[oppSide].points.length}</b>${cross.best>=2?` · 最高 <span class="combo-txt">${cross.best} 连击</span>`:""}</p>
         <p class="small">历史命中率 ${pct}%　·　质询五步：设陷阱 → 逼表态 → 抓矛盾 → 缩小包围 → 确认战果</p>
         <div class="btn-row" style="max-width:340px;margin:16px auto 0">
           <button class="accent" onclick="location.reload()">再战一场</button>
@@ -1250,7 +1346,29 @@ function crossNext(){
 /* =====================================================
    模块三：反驳快攻
 ===================================================== */
-let flash = {idx:0, right:0, order:[]};
+let flash = {idx:0, right:0, streak:0, best:0, order:[], timer:null, remain:0};
+const FLASH_TIME = 20;
+function flashTimerStart(){
+  clearInterval(flash.timer);
+  flash.remain = FLASH_TIME;
+  flashTimerRender();
+  flash.timer = setInterval(()=>{
+    flash.remain--;
+    flashTimerRender();
+    if(flash.remain<=0){ clearInterval(flash.timer); flash.timer=null; flashTimeout(); }
+  },1000);
+}
+function flashTimerRender(){
+  const f = $("flashTimeFill");
+  f.style.width = (flash.remain/FLASH_TIME*100)+"%";
+  f.classList.toggle("danger", flash.remain<=6);
+  $("flashTimeLbl").textContent = `⏱ ${flash.remain}s —— 反驳是抢答，慢一步战场就没了`;
+}
+function flashTimeout(){
+  if(!$("flashPlay").offsetParent) return;
+  flash.streak = 0;
+  flashPick(-1);
+}
 function flashShuffle(){
   flash.order = FLASH_POOL.map((_,i)=>i).sort(()=>Math.random()-0.5);
 }
@@ -1259,26 +1377,37 @@ function flashRound(){
   const item = FLASH_POOL[flash.order[flash.idx]];
   $("flashIdx").textContent = flash.idx+1;
   $("flashRight").textContent = flash.right;
+  $("flashStreak").textContent = flash.streak;
   $("flashSpeech").innerHTML = `<div class="who">对方辩手</div>${item.s}`;
   $("flashOpts").innerHTML = item.opts.map((o,i)=>
     `<button class="opt" data-i="${i}" onclick="flashPick(${i})">${o}</button>`).join("");
   $("flashWriteCard").style.display="none";
   $("flashFeedback").style.display="none";
   $("flashNextRow").style.display="none";
+  flashTimerStart();
 }
 function flashPick(i){
+  if(flash.timer){ clearInterval(flash.timer); flash.timer=null; }
   const item = FLASH_POOL[flash.order[flash.idx]];
+  const timeout = i===-1;
   document.querySelectorAll("#flashOpts .opt").forEach(b=>{
     b.disabled=true;
     if(+b.dataset.i===item.c) b.classList.add("correct");
-    else if(+b.dataset.i===i) b.classList.add("wrong");
+    else if(!timeout && +b.dataset.i===i) b.classList.add("wrong");
   });
-  const ok = i===item.c;
+  const ok = !timeout && i===item.c;
   store.flash.total++;
-  if(ok) store.flash.right++;
+  if(ok){ store.flash.right++; flash.streak++; flash.best=Math.max(flash.best,flash.streak); }
+  else flash.streak = 0;
   saveStore(store);
+  $("flashRight").textContent = flash.right;
+  $("flashStreak").textContent = flash.streak;
   $("flashWriteCard").style.display="block";
   $("flashWriteCard").dataset.ok = ok?"1":"0";
+  if(!ok){
+    const why = timeout ? "超时未答——自由辩里沉默等于丢战场。" : "手段选偏了，看解析找正确的刀。";
+    $("flashTimeLbl").textContent = why;
+  }
 }
 function flashSubmit(){
   const item = FLASH_POOL[flash.order[flash.idx]];
@@ -1288,7 +1417,7 @@ function flashSubmit(){
   const fb = $("flashFeedback");
   fb.style.display="block";
   fb.innerHTML = `
-    <div class="feedback ${ok?"good":"bad"}"><b>${ok?"✔ 手段选对了":"✘ 手段偏了"}</b>　<span class="small">${item.why}</span></div>
+    <div class="feedback ${ok?"good":"bad"}"><b>${ok?"✔ 手段选对了":"✘ 手段偏了"}</b>${ok&&flash.streak>=2?` <span class="streak-badge">🔥 ${flash.streak} 连击</span>`:""}　<span class="small">${item.why}</span></div>
     ${my?`<div class="speech" style="border-left-color:var(--gold)"><div class="who">你的反驳</div>${my}</div>`:""}
     <div class="card" style="background:#f8f5ec">
       <h3 style="font-size:14px">🗡️ 参考反驳</h3>
@@ -1301,21 +1430,25 @@ function flashNext(){
   if(flash.idx < FLASH_POOL.length){
     flashRound();
   } else {
+    clearInterval(flash.timer);
     const pct = store.flash.total ? Math.round(store.flash.right/store.flash.total*100):0;
+    const rank = flash.right>=FLASH_POOL.length*0.9 ? "S" : flash.right>=FLASH_POOL.length*0.7 ? "A" : flash.right>=FLASH_POOL.length*0.5 ? "B" : "C";
+    const rankCmt = {S:"快、准、狠——谬误一出现你的刀已经出鞘了。",A:"反应在线，个别手段判断还差火候，复盘错题即可。",B:"手段认得但不熟，去学堂把谬误清单再过一遍。",C:"先别抢时间，把十道题的解析逐条读完再来。"}[rank];
     $("flashPlay").innerHTML = `
       <div class="card result-hero">
-        <div class="big">⚡</div>
+        <div class="rank-big">${rank}</div>
         <h3>快攻战报</h3>
-        <p>本轮正确 <b style="color:var(--cinnabar);font-size:22px">${flash.right} / ${FLASH_POOL.length}</b></p>
+        <p>本轮正确 <b style="color:var(--cinnabar);font-size:22px">${flash.right} / ${FLASH_POOL.length}</b>${flash.best>=2?` · 最高 <span class="combo-txt">${flash.best} 连击</span>`:""}</p>
+        <p class="small">${rankCmt}</p>
         <p class="small">历史正确率 ${pct}%　·　有效反驳三思路：做批判者而非杠精、归谬致胜、受身反击</p>
         <div class="btn-row" style="max-width:340px;margin:16px auto 0">
           <button class="accent" onclick="flashRestart()">换序再练</button>
-          <button class="secondary" onclick="go('school')">去学堂复盘</button>
+          <button class="secondary" onclick="go('duel')">去对线场实战</button>
         </div>
       </div>`;
   }
 }
-function flashRestart(){ flash.idx=0; flash.right=0; flashShuffle(); flashRound(); }
+function flashRestart(){ flash.idx=0; flash.right=0; flash.streak=0; flash.best=0; flashShuffle(); flashRound(); }
 flashRound();
 
 /* =====================================================
@@ -1416,6 +1549,238 @@ function arenaReset(){
     <div class="info"><b>${p.n}</b><span>${Math.floor(p.dur/60)} 分钟 · ${p.side==="both"?"双方交替":(p.side==="pro"?"正方":"反方")}</span></div>
     <button class="ghost" style="padding:6px 10px;font-size:12px" onclick="arena.phase=${i};arenaLoadPhase()">跳转</button></div>`).join("");
 })();
+
+/* =====================================================
+   模块四点五：对线场（本地自由交锋引擎）
+===================================================== */
+const MOVES = [
+  {k:"def",   n:"拆定义",   re:/定义|概念|偷换|边界|什么叫|什么算|包不包含|界定|单方/},
+  {k:"std",   n:"拆判准",   re:/判准|标准|比较|衡量|排序|尺度|更重要|优先.{0,8}(指|是)/},
+  {k:"logic", n:"拆逻辑",   re:/逻辑|推导|链条|环节|跳跃|前提|中间|凭什么|必然|就能推出/},
+  {k:"evi",   n:"拆论据",   re:/数据|来源|样本|比例|证据|出处|统计|多大|调研|实证/},
+  {k:"counter",n:"举反例",  re:/反例|比如|例如|假如|举例|难道|曾有|如果.{0,14}呢/},
+  {k:"guiniu",n:"归谬",     re:/照此|按你方|按您的|岂不是|是不是也|那么.{0,12}也/},
+  {k:"shouge",n:"让步收割", re:/就算|即便|即使|退一步|姑且|承认.{0,12}但/}
+];
+const DUEL_CHIPS = [
+  "请问对方辩友，您方所说的概念包不包含另一种情形？",
+  "从这一点推到结论，中间靠什么环节？这个环节您方论证了吗？",
+  "这个判断的数据来源是？样本多大？",
+  "照此逻辑，岂不是另一种情形也得成立？",
+  "就算退一步承认您方所说，又如何推出最终结论？",
+  "您方用时间先后还是利弊大小作标准？标准不同结论就变了。"
+];
+const FOE_TAUNT = ["这个攻法我们备过赛——下一个。","您方再想想，我方论点还站着。","别绕圈子，打到点子上。"];
+const FOE_WAVER = ["……有点意思，我方需要收紧表述。","这一问不容易答，容我换个说法。","您方抓住了外围，但核心还稳。"];
+function quotedTerms(s){
+  const out=[]; const re=/“([^”]{2,8})”/g; let m;
+  while((m=re.exec(s)) && out.length<4) out.push(m[1]);
+  return out;
+}
+function duelEsc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+let duel = {topicIdx:0, side:"pro", round:0, rounds:4, meHp:100, foeHp:100, combo:0, bestCombo:0, bestHit:0, moveUse:{}, timer:null, remain:0, cur:null, terms:[], over:false};
+const duelGetSide = pillSelect("duelSide", s=>{});
+function duelHpRender(who){
+  const isMe = who==="me";
+  const hp = isMe ? duel.meHp : duel.foeHp;
+  const el = $(isMe?"meHp":"foeHp"), num = $(isMe?"meHpNum":"foeHpNum");
+  el.style.width = Math.max(0,hp)+"%";
+  el.classList.toggle("low", hp<=25);
+  num.textContent = Math.max(0,hp);
+}
+function duelDmgPop(who, n){
+  const wrap = $(who==="me"?"meHpWrap":"foeHpWrap");
+  const d = document.createElement("span");
+  d.className = "dmg "+(who==="me"?"me":"foe");
+  d.textContent = (who==="me"?"-":"-")+n;
+  wrap.appendChild(d);
+  setTimeout(()=>d.remove(), 1100);
+}
+function duelSay(who, text, label){
+  const div = document.createElement("div");
+  div.className = "speech"+(who==="foe"?" opponent":"");
+  div.style.borderLeftColor = who==="gold" ? "var(--gold)" : (who==="me"?"var(--gold)":"");
+  div.innerHTML = `<div class="who">${label||""}</div>${duelEsc(text)}`;
+  $("duelLog").appendChild(div);
+  return div;
+}
+function duelFeedback(html, cls){
+  const div = document.createElement("div");
+  div.className = "feedback "+(cls||"bad");
+  div.innerHTML = html;
+  $("duelLog").appendChild(div);
+}
+function duelStart(){
+  duel.topicIdx = +$("duelTopic").value;
+  duel.side = duelGetSide();
+  duel.round = 0; duel.meHp = 100; duel.foeHp = 100;
+  duel.combo = 0; duel.bestCombo = 0; duel.bestHit = 0; duel.moveUse = {}; duel.over = false;
+  $("duelSelect").style.display = "none";
+  $("duelPlay").style.display = "block";
+  $("duelLog").innerHTML = "";
+  duelHpRender("me"); duelHpRender("foe");
+  duelChipsRender();
+  duelRound();
+}
+function duelChipsRender(){
+  $("duelChips").innerHTML = DUEL_CHIPS.map(c=>`<button onclick="duelChip(this)">${c.slice(0,14)}…</button>`).join("");
+}
+function duelChip(btn){
+  const idx = [...btn.parentNode.children].indexOf(btn);
+  $("duelInput").value = DUEL_CHIPS[idx];
+  $("duelInput").focus();
+}
+function duelRound(){
+  const tp = TOPICS[duel.topicIdx];
+  const oppSide = duel.side==="pro" ? "con" : "pro";
+  const pts = tp[oppSide].points;
+  const pt = pts[duel.round % pts.length];
+  duel.cur = pt;
+  duel.terms = quotedTerms(pt.t);
+  const escalation = duel.round >= pts.length ? "（我方再强调——）" : "";
+  duelSay("foe", escalation+pt.t, `对方${oppSide==="pro"?"正方":"反方"}辩手 · 第 ${duel.round+1} 招`);
+  $("duelRoundLbl").textContent = `第 ${duel.round+1} / ${duel.rounds} 回合 · 连击 ${duel.combo}`;
+  $("duelInput").value = "";
+  $("duelInputCard").style.display = "block";
+  $("duelNextRow").style.display = "none";
+  duelTimerStart(45);
+  window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+}
+function duelTimerStart(sec){
+  clearInterval(duel.timer);
+  duel.remain = sec;
+  duelTimerRender();
+  duel.timer = setInterval(()=>{
+    duel.remain--;
+    duelTimerRender();
+    if(duel.remain<=0){
+      clearInterval(duel.timer); duel.timer=null;
+      duelTimeout();
+    }
+  }, 1000);
+}
+function duelTimerRender(){
+  const f = $("duelTimeFill");
+  f.style.width = (duel.remain/45*100)+"%";
+  f.classList.toggle("danger", duel.remain<=10);
+  $("duelTimeLbl").textContent = `⏱ 剩余 ${duel.remain} 秒——快出招`;
+}
+function duelTimeout(){
+  if(!$("duelInputCard").offsetParent) return;
+  duel.combo = 0;
+  duel.meHp = Math.max(0, duel.meHp-14);
+  duelHpRender("me"); duelDmgPop("me", 14);
+  $("duelHpCard").classList.add("shake"); setTimeout(()=>$("duelHpCard").classList.remove("shake"),450);
+  duelSay("foe", "时间到都不还手？那我方继续推进论点——"+FOE_TAUNT[duel.round%FOE_TAUNT.length], "对方辩手");
+  duelFeedback("⏰ <b>超时挨打</b>：对方攻击落在无人防守之地，你方 -14 血。自由辩先答后问、短句快反，宁可错不可停。", "bad");
+  duelAfterExchange();
+}
+function scoreReply(txt){
+  const t = txt.trim();
+  const res = {score:0, moves:[], notes:[], quote:false};
+  if(t.length<6){ res.notes.push("发言太短，不构成有效攻击"); return res; }
+  res.score += 10;
+  if(/[？?]/.test(t)){ res.score += 8; res.notes.push("封闭式提问，逼对方表态 +8"); }
+  const hitTerm = duel.terms.find(term=>t.includes(term));
+  if(hitTerm){ res.score += 15; res.quote = true; res.notes.push(`点名对方核心概念「${hitTerm}」 +15`); }
+  const lenBonus = t.length>=15 && t.length<=150 ? 5 : 0;
+  res.score += lenBonus;
+  MOVES.forEach(m=>{
+    if(m.re.test(t)){
+      const used = duel.moveUse[m.k]||0;
+      duel.moveUse[m.k] = used+1;
+      res.moves.push(m.n);
+      const gain = used===0 ? 20 : used===1 ? 10 : 5;
+      res.score += gain;
+      res.notes.push(`刀法「${m.n}」${used===0?"精准命中 +20":used===1?"再用 +10":"重复出招，伤害递减 +5"}`);
+    }
+  });
+  if(res.moves.length===0 && !res.quote){ res.notes.push("没有识别到任何攻击手段——先拆逻辑、再要证据，别只表态"); }
+  return res;
+}
+function duelStrike(){
+  if(duel.timer){ clearInterval(duel.timer); duel.timer=null; }
+  const txt = $("duelInput").value.trim();
+  const r = scoreReply(txt);
+  const heavy = r.score>=55, hit = r.score>=30;
+  duelSay("me", txt||"……", "你的还击");
+  if(heavy){
+    const dmg = Math.min(40, 24 + duel.combo*5);
+    duel.combo++;
+    duel.bestCombo = Math.max(duel.bestCombo, duel.combo);
+    duel.foeHp = Math.max(0, duel.foeHp-dmg);
+    duel.bestHit = Math.max(duel.bestHit, r.score);
+    duelHpRender("foe"); duelDmgPop("foe", dmg);
+    $("duelHpCard").classList.add("shake"); setTimeout(()=>$("duelHpCard").classList.remove("shake"),450);
+    foeLine = duel.cur.concede || "……这一刀确实疼，我方调整表述。";
+    duelSay("foe", foeLine, `对方辩手${duel.combo>=2?` · <span class="combo-txt">${duel.combo} 连击！</span>`:""}`);
+    duelFeedback(`<b>✔ 重击命中</b>（杀伤 ${dmg}）<br>${r.notes.map(n=>"· "+n).join("<br>")}`, "good");
+  } else if(hit){
+    const dmg = 12 + duel.combo*2;
+    duel.combo++;
+    duel.bestCombo = Math.max(duel.bestCombo, duel.combo);
+    duel.foeHp = Math.max(0, duel.foeHp-dmg);
+    duel.bestHit = Math.max(duel.bestHit, r.score);
+    duelHpRender("foe"); duelDmgPop("foe", dmg);
+    duelSay("foe", FOE_WAVER[duel.round%FOE_WAVER.length], "对方辩手");
+    duelFeedback(`<b>△ 有效攻击</b>（杀伤 ${dmg}）<br>${r.notes.map(n=>"· "+n).join("<br>")}<br><span class="small">伤而不倒——追问要形成连环：逼表态 → 抓矛盾 → 收战果。</span>`, "good");
+  } else {
+    const dmg = 12;
+    duel.combo = 0;
+    duel.meHp = Math.max(0, duel.meHp-dmg);
+    duelHpRender("me"); duelDmgPop("me", dmg);
+    $("duelHpCard").classList.add("shake"); setTimeout(()=>$("duelHpCard").classList.remove("shake"),450);
+    duelSay("foe", duel.cur.defense || FOE_TAUNT[duel.round%FOE_TAUNT.length], "对方辩手反击");
+    duelFeedback(`<b>✘ 攻击落空</b>：你方 -${dmg} 血<br>${r.notes.map(n=>"· "+n).join("<br>")}`, "bad");
+  }
+  duelAfterExchange();
+}
+function duelAfterExchange(){
+  $("duelInputCard").style.display = "none";
+  if(duel.foeHp<=0 || duel.meHp<=0 || duel.round>=duel.rounds-1){
+    duelEnd();
+    return;
+  }
+  $("duelNextBtn").textContent = `续战（第 ${duel.round+2} 回合）`;
+  $("duelNextRow").style.display = "flex";
+  window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+}
+function duelNext(){
+  duel.round++;
+  duelRound();
+}
+function duelEnd(){
+  duel.over = true;
+  const win = duel.foeHp<=0 && duel.meHp>0;
+  const lose = duel.meHp<=0;
+  const dealt = 100-duel.foeHp, taken = 100-duel.meHp;
+  let rank = "C";
+  if(win && duel.meHp>=70) rank="S";
+  else if(win) rank="A";
+  else if(!lose && dealt>=taken) rank="B";
+  store.duel.total++;
+  if(win) store.duel.win++;
+  saveStore(store);
+  const comment = {
+    S:"行云流水：点名概念、连环追问、归谬收割全都用上了，这就是比赛级自由辩。",
+    A:"胜势明显。若能在重击后立刻「收割战果」——用一句话总结让步、转向下一战场——就是 S 级。",
+    B:"有来有回。问题多在「攻了但不狠」：命中后要连环追问，一次质询问到底。",
+    C:"光说不拆，等于没攻。先记住三板斧：要定义、要环节、要数据。"
+  }[rank];
+  $("duelPlay").innerHTML = `
+    <div class="card result-hero">
+      <div class="rank-big">${rank}</div>
+      <h3>${win?"⚔️ 对方辩手败退":lose?"🛡️ 我方防线失守":"🤝 势均力敌"}</h3>
+      <p>输出伤害 <b style="color:var(--green)">${dealt}</b> · 承受伤害 <b style="color:var(--cinnabar)">${taken}</b> · 最高连击 <b>${duel.bestCombo}</b></p>
+      <p class="small">${comment}</p>
+      <p class="small">对线胜场 ${store.duel.win} / ${store.duel.total} · 用过的刀法：${Object.keys(duel.moveUse).map(k=>MOVES.find(m=>m.k===k).n+"×"+duel.moveUse[k]).join("、")||"无"}</p>
+      <div class="btn-row" style="max-width:340px;margin:16px auto 0">
+        <button class="accent" onclick="location.reload()">再战一场</button>
+        <button class="secondary" onclick="go('ai')">上真模型对辩</button>
+      </div>
+    </div>`;
+  window.scrollTo({top:document.body.scrollHeight, behavior:"smooth"});
+}
 
 /* =====================================================
    辩论学堂
